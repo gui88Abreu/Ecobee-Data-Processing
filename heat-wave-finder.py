@@ -24,4 +24,3 @@ fv = ch.get_heatwave(data=dataframe, flag=flag, hw_name=hw_name, day_name = data
                      mean_tem_name = dataset.columns[12])
 main_col = [dataframe.columns[1],dataframe.columns[2],dataframe.columns[12],flag,hw_name, 'Percentil 90']
 res_df = fv[main_col]
-                                                                 
