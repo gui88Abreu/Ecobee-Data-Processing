@@ -44,7 +44,7 @@ def check_2days(data, day, day_name = 'DAY365'):
 
 # Function that if "check_2days" is True we check if in these 2 days the definition of heatwave is satisfied
 def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max_tmp_name = 'MAX_N_AIRTMP_MED10',
-            min_p90 = 25, max_p90 = 35, day_name = 'DAY365'):
+            day_name = 'DAY365'):
     '''
     Input:
         data: Pandas Data Frame Object.
@@ -59,9 +59,9 @@ def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max
     '''
     
     if min_tmp_name == max_tmp_name:
-        var_names = [min_tmp_name, day_name]
+        var_names = [min_tmp_name, day_name, 'p90_min', 'p90_max']
     else:
-        var_names = [min_tmp_name,max_tmp_name,day_name]
+        var_names = [min_tmp_name,max_tmp_name,day_name,'p90_min', 'p90_max']
     
     actual_df = data[data[day_name] == day][var_names]
     df1_back = data[data[day_name] == day - 1][var_names]
@@ -76,26 +76,26 @@ def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max
         # Defining conditions so that there is or not a heatwave
         if(index == 'CTN90pct'):
             if not df1_back.empty:
-                c1_b = np.max(df1_back[min_tmp_name].values) >= min_p90
+                c1_b = np.max(df1_back[min_tmp_name].values) >= df1_back['p90_min'].values[0]
             if not df2_back.empty:
-                c2_b = np.max(df2_back[min_tmp_name].values) >= min_p90
+                c2_b = np.max(df2_back[min_tmp_name].values) >= df2_back['p90_min'].values[0]
             if not df1_forward.empty:    
-                c1_f = np.max(df1_forward[min_tmp_name].values) >= min_p90
+                c1_f = np.max(df1_forward[min_tmp_name].values) >= df1_forward['p90_min'].values[0]
             if not df2_forward.empty:
-                c2_f = np.max(df2_forward[min_tmp_name].values) >= min_p90
+                c2_f = np.max(df2_forward[min_tmp_name].values) >= df2_forward['p90_min'].values[0]
             if not actual_df.empty:
-                c3   = np.max(actual_df[min_tmp_name].values) >= min_p90
+                c3   = np.max(actual_df[min_tmp_name].values) >= actual_df['p90_min'].values[0]
         elif(index == 'CTX90pct'):
             if not df1_back.empty:
-                c1_b = np.max(df1_back[max_tmp_name].values) >= max_p90
+                c1_b = np.max(df1_back[max_tmp_name].values) >= df1_back['p90_max'].values[0]
             if not df2_back.empty:
-                c2_b = np.max(df2_back[max_tmp_name].values) >= max_p90
+                c2_b = np.max(df2_back[max_tmp_name].values) >= df2_back['p90_max'].values[0]
             if not df1_forward.empty:    
-                c1_f = np.max(df1_forward[max_tmp_name].values) >= max_p90
+                c1_f = np.max(df1_forward[max_tmp_name].values) >= df1_forward['p90_max'].values[0]
             if not df2_forward.empty:
-                c2_f = np.max(df2_forward[max_tmp_name].values) >= max_p90
+                c2_f = np.max(df2_forward[max_tmp_name].values) >= df2_forward['p90_max'].values[0]
             if not actual_df.empty:
-                c3   = np.max(actual_df[max_tmp_name].values) >= max_p90
+                c3   = np.max(actual_df[max_tmp_name].values) >= actual_df['p90_max'].values[0]
         else:
             print('A valid index name is required.')
             return False
@@ -147,7 +147,8 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
     # Create new columns on the data frame and iniate them with zeros.
     df[flag_heat] = 0
     df[flag_unique_heat] = 0
-    df['Percentile 90'] = np.nan
+    df['p90_max'] = np.nan
+    df['p90_min'] = np.nan
 
     # Variable that labels unique heatwaves, each one of heatwaves will have a unique integer number
     which_heat_wave = 1
@@ -165,8 +166,14 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
             pth_max = df_pct[max_tmp_name].quantile(percentile)
             pth_min = df_pct[min_tmp_name].quantile(percentile)
             
+            df.loc[(data[year_name] == y) & (data[day_name] == d) , 'p90_max'] = pth_max
+            df.loc[(data[year_name] == y) & (data[day_name] == d) , 'p90_min'] = pth_min
+        
+        itera = iter(df_year[day_name].unique())
+        for d in itera:
+            
             # verify if it was registered temperatures above the percentils
-            if init_hw(df,d,index = index,max_p90=pth_max,min_p90=pth_min,max_tmp_name = max_tmp_name, min_tmp_name = min_tmp_name, day_name = day_name):
+            if init_hw(df,d,index = index,max_tmp_name = max_tmp_name, min_tmp_name = min_tmp_name, day_name = day_name):
                 
                 # label the heat wave encountered on the data frame
                 new_hw = True
@@ -177,5 +184,5 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
                     which_heat_wave = which_heat_wave + 1
                     new_hw = False
             # Fill the data frame with its percentils for each day.
-            df.loc[(data[year_name] == y) & (data[day_name] == d) , 'Percentile 90'] = pth_max
+            
     return df
