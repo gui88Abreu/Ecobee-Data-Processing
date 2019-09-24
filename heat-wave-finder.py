@@ -12,7 +12,7 @@ import cm_library as cm
     
 df_dict = dict()
 for year in range(1997, 2019):
-    year = 2017
+    
     dataset = pd.read_excel("../data_set/Dados_CEPAGRI/"+str(year)+".xlsx")
     dataframe = dataset.loc[:, ~dataset.columns.str.contains('^Unnamed')]
     
