@@ -64,44 +64,38 @@ def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max
         var_names = [min_tmp_name,max_tmp_name,day_name]
     
     actual_df = data[data[day_name] == day][var_names]
+    df1_back = data[data[day_name] == day - 1][var_names]
+    df2_back = data[data[day_name] == day - 2][var_names]
+    df1_forward = data[data[day_name] == day + 1][var_names]
+    df2_forward = data[data[day_name] == day + 2][var_names]
     
     if(check_2days(data,day, day_name)):
+            
         
-        # It certifies that it is not at the boundary case (less than 0 days)
-        if day - 2 > 0:
-            df1_back = data[data[day_name] == day - 1][var_names]
-            df2_back = data[data[day_name] == day - 2][var_names]
-        elif day - 1 > 0:
-            df1_back = data[data[day_name] == day - 1][var_names]
-            df2_back = actual_df    
-        else:
-            df2_back = actual_df
-            df1_back = actual_df
-        
-        # It certifies that it is not at the boundary case (more than 365 or 366 days)    
-        if day + 2 <= pd.DataFrame.max(data[day_name]):
-            df1_forward = data[data[day_name] == day + 1][var_names]
-            df2_forward = data[data[day_name] == day + 2][var_names]
-        elif day + 1 <= pd.DataFrame.max(data[day_name]):
-            df1_forward = data[data[day_name] == day + 1][var_names]
-            df2_forward = actual_df    
-        else:
-            df2_forward = actual_df
-            df1_forward = actual_df
-        
+        c1_b = c2_b = c1_f = c2_f = c3 = False
         # Defining conditions so that there is or not a heatwave
         if(index == 'CTN90pct'):
-            c1_b = np.min(df1_back[min_tmp_name].values) >= min_p90
-            c2_b = np.min(df2_back[min_tmp_name].values) >= min_p90
-            c1_f = np.min(df1_forward[min_tmp_name].values) >= min_p90
-            c2_f = np.min(df2_forward[min_tmp_name].values) >= min_p90
-            c3   = np.min(actual_df[min_tmp_name].values) >= min_p90
+            if not df1_back.empty:
+                c1_b = np.max(df1_back[min_tmp_name].values) >= min_p90
+            if not df2_back.empty:
+                c2_b = np.max(df2_back[min_tmp_name].values) >= min_p90
+            if not df1_forward.empty:    
+                c1_f = np.max(df1_forward[min_tmp_name].values) >= min_p90
+            if not df2_forward.empty:
+                c2_f = np.max(df2_forward[min_tmp_name].values) >= min_p90
+            if not actual_df.empty:
+                c3   = np.max(actual_df[min_tmp_name].values) >= min_p90
         elif(index == 'CTX90pct'):
-            c1_b = np.max(df1_back[max_tmp_name].values) >= max_p90
-            c2_b = np.max(df2_back[max_tmp_name].values) >= max_p90
-            c1_f = np.max(df1_forward[max_tmp_name].values) >= max_p90
-            c2_f = np.max(df2_forward[max_tmp_name].values) >= max_p90
-            c3   = np.max(actual_df[max_tmp_name].values) >= max_p90
+            if not df1_back.empty:
+                c1_b = np.max(df1_back[max_tmp_name].values) >= max_p90
+            if not df2_back.empty:
+                c2_b = np.max(df2_back[max_tmp_name].values) >= max_p90
+            if not df1_forward.empty:    
+                c1_f = np.max(df1_forward[max_tmp_name].values) >= max_p90
+            if not df2_forward.empty:
+                c2_f = np.max(df2_forward[max_tmp_name].values) >= max_p90
+            if not actual_df.empty:
+                c3   = np.max(actual_df[max_tmp_name].values) >= max_p90
         else:
             print('A valid index name is required.')
             return False
