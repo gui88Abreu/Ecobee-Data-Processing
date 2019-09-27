@@ -17,7 +17,7 @@ file.close()
 
 i = 0;
 while i < len(data):
-    if '#' in data[i] or '\n' == data[i]:
+    if '#' in data[i] or '\n' == data[i] or '' == data[i]:
         data.pop(i)
     else:
         i+=1
