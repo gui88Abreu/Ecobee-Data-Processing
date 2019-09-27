@@ -8,7 +8,7 @@ Created on Wed Sep 18 14:57:37 2019
 
 #importing libraries
 import pandas as pd
-import cm_library as cm
+import heatwaveFinder as hwf
     
 df_dict = dict()
 for year in range(1997, 2019):
@@ -37,7 +37,7 @@ for year in range(1997, 2019):
             max_tmp_col = dataset.columns[12]
             min_tmp_col = dataset.columns[14]
         
-        fv = cm.get_heatwave(data=dataframe, flag=flag, hw_name=hw_name, day_name = day_col, year_name = year_col,
+        fv = hwf.get_heatwave(data=dataframe, flag=flag, hw_name=hw_name, day_name = day_col, year_name = year_col,
                              mean_tmp_name = mean_tmp_col, max_tmp_name=max_tmp_col, min_tmp_name=min_tmp_col)
         main_col = [dataframe.columns[1],dataframe.columns[2],dataframe.columns[12],flag,hw_name, 'p90_max', 'p90_min']
         res_df = fv[main_col]
