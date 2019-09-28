@@ -1,4 +1,4 @@
-# Scientific-Initiation-Project
+# Ecobee Data Processing
 
 ## Description
 
