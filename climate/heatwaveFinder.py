@@ -162,7 +162,7 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
             # For each day there will be a different pct
             df_pct = df[(df[day_name] >= d-15) & (df[day_name] <= d + 15)]
             
-            # get the percentils
+            # get the percentiles
             pth_max = df_pct[max_tmp_name].quantile(percentile)
             pth_min = df_pct[min_tmp_name].quantile(percentile)
             

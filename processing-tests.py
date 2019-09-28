@@ -7,8 +7,8 @@ Created on Wed Sep 18 14:57:37 2019
 """
 
 #importing libraries
-import pandas as pd
-import heatwaveFinder as hwf
+import climate.heatwaveFinder as hwf
+import ecobee.preprocessing as pp
     
 df_dict = dict()
 for year in range(1997, 2019):
@@ -16,30 +16,22 @@ for year in range(1997, 2019):
     print('processing data: ' + str(year)+'.xlsx'+' ...')
     
     try:
-        dataset = pd.read_excel("../data_set/Dados_CEPAGRI/"+str(year)+".xlsx")
-        if '^Unnamed' in dataset.columns:
-            dataframe = dataset.loc[:, ~dataset.columns.str.contains('^Unnamed')]
-        else:
-            dataframe = dataset
+        path = '../data_set/ecobee/House 1/Temperature/1.csv'
+        df = pp.ecobeeDataFrame(path)
         flag = '0 (not HW)/ 1 (HW)'
         hw_name='HeatWaves'
-        year_col = dataset.columns[1]
-        day_col = dataset.columns[2]
-        mean_tmp_col = dataset.columns[12]
-        max_tmp_col = None
-        min_tmp_col = None
+        year_col = 'Year'
+        day_col = 'Non-chronological day'
+        mean_tmp_col = 'Outdoor Temp (C)'
         
-        # Identify what type of data dataset is
-        if dataframe[dataframe.columns[0]].any() == 222 or dataframe[dataframe.columns[0]].any() == 265:
-            year_col = dataset.columns[1]
-            day_col = dataset.columns[2]
-            mean_tmp_col = None
-            max_tmp_col = dataset.columns[12]
-            min_tmp_col = dataset.columns[14]
+        fv = hwf.get_heatwave(data=df, 
+                              flag=flag, 
+                              hw_name=hw_name, 
+                              day_name = day_col, 
+                              year_name = year_col,
+                              mean_tmp_name = mean_tmp_col)
         
-        fv = hwf.get_heatwave(data=dataframe, flag=flag, hw_name=hw_name, day_name = day_col, year_name = year_col,
-                             mean_tmp_name = mean_tmp_col, max_tmp_name=max_tmp_col, min_tmp_name=min_tmp_col)
-        main_col = [dataframe.columns[1],dataframe.columns[2],dataframe.columns[12],flag,hw_name, 'p90_max', 'p90_min']
+        main_col = ['Year','Day',mean_tmp_col,flag,hw_name, 'p90_max', 'p90_min']
         res_df = fv[main_col]
         
         df_dict[str(year)] = res_df
