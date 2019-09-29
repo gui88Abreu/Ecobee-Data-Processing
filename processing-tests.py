@@ -22,16 +22,18 @@ for year in range(1997, 2019):
         hw_name='HeatWaves'
         year_col = 'Year'
         day_col = 'Non-chronological day'
-        mean_tmp_col = 'Outdoor Temp (C)'
+        temp_col = 'Max Temperature'
+        tt_temp = 'Outdoor Temp (C)'
         
         fv = hwf.get_heatwave(data=df, 
                               flag=flag, 
                               hw_name=hw_name, 
                               day_name = day_col, 
                               year_name = year_col,
-                              mean_tmp_name = mean_tmp_col)
+                              max_tmp_name = temp_col,
+                              min_tmp_name = temp_col)
         
-        main_col = ['Year','Day',mean_tmp_col,flag,hw_name, 'p90_max', 'p90_min']
+        main_col = ['Year','Day',tt_temp,temp_col,flag,hw_name, 'p90_max', 'p90_min']
         res_df = fv[main_col]
         
         df_dict[str(year)] = res_df
