@@ -114,7 +114,7 @@ def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max
         return False
 
 # Function to actually get heatwaves
-def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX90pct',percentile = 0.9, 
+def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX90pct',percentile = 90, 
                  day_name = 'DAY365', year_name = 'YEAR',min_tmp_name = 'MIN_N_AIRTMP_MED10', max_tmp_name = 'MAX_N_AIRTMP_MED10'):
     '''
     Input:
@@ -160,12 +160,24 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
 
         for d in itera:
             # For each day there will be a different pct
-            df_pct = df[(df[day_name] >= d-15) & (df[day_name] <= d + 15)]
+            df_pct = df_year[(df_year[day_name] >= d-15) & (df_year[day_name] <= d + 15)]
+            
+            # organize data to get the percentiles
+            max_t = []
+            min_t = []
+            for day in df_pct[day_name].unique():
+                mx = df_pct[df_pct[day_name] == day][max_tmp_name].unique()
+                max_t.append(mx)
+            
+            for day in df_pct[day_name].unique():
+                mn = df_pct[df_pct[day_name] == day][min_tmp_name].unique()
+                min_t.append(mn)
             
             # get the percentiles
-            pth_max = df_pct[max_tmp_name].quantile(percentile)
-            pth_min = df_pct[min_tmp_name].quantile(percentile)
+            pth_max = np.percentile(np.asarray(max_t), percentile)
+            pth_min = np.percentile(np.asarray(min_t), percentile)   
             
+            # save percentiles
             df.loc[(data[year_name] == y) & (data[day_name] == d) , 'p90_max'] = pth_max
             df.loc[(data[year_name] == y) & (data[day_name] == d) , 'p90_min'] = pth_min
         
@@ -173,7 +185,7 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
         for d in itera:
             
             # verify if it was registered temperatures above the percentils
-            if init_hw(df,d,index = index,max_tmp_name = max_tmp_name, min_tmp_name = min_tmp_name, day_name = day_name):
+            if init_hw(df_year,d,index = index,max_tmp_name = max_tmp_name, min_tmp_name = min_tmp_name, day_name = day_name):
                 
                 # label the heat wave encountered on the data frame
                 new_hw = True
