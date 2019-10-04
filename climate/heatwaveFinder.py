@@ -58,10 +58,10 @@ def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max
         from 2 days back until the day specified or from this day until 2 days forward. It returns False otherwise.
     '''
     
-    if min_tmp_name == max_tmp_name:
-        var_names = [min_tmp_name, day_name, 'p90_min', 'p90_max']
-    else:
-        var_names = [min_tmp_name,max_tmp_name,day_name,'p90_min', 'p90_max']
+    if index == 'CTX90pct':
+        var_names = [max_tmp_name, day_name,'p90_max']
+    if index == 'CTN90pct':
+        var_names = [min_tmp_name, day_name,'p90_min']
     
     actual_df = data[data[day_name] == day][var_names]
     df1_back = data[data[day_name] == day - 1][var_names]
@@ -114,8 +114,8 @@ def init_hw(data,day,index = 'CTX90pct',min_tmp_name = 'MIN_N_AIRTMP_MED10', max
         return False
 
 # Function to actually get heatwaves
-def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX90pct',percentile = 90, 
-                 day_name = 'DAY365', year_name = 'YEAR',min_tmp_name = 'MIN_N_AIRTMP_MED10', max_tmp_name = 'MAX_N_AIRTMP_MED10'):
+def get_heatwave(data, flag, hw_name='none', index = 'CTX90pct',percentile = 90, 
+                 day_name = 'DAY365', year_name = 'YEAR',min_tmp_name = None, max_tmp_name = None):
     '''
     Input:
         data: Pandas Data Frame Object.
@@ -132,12 +132,7 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
         It returns a Pandas Data Frame with 3 new columns (flag column, hw_name column and 'Pencentil 90' column).
         For flag and hw_name colmuns, the days labeld with an integer greater than one denotes a heatwave.
         the last column, 'Percentil 90', contains de percentil calculated for each day.
-    ''' 
-    
-    if mean_tmp_name != None:
-        min_tmp_name = max_tmp_name = mean_tmp_name
-    
-    
+    '''
     # copy data frame
     df = data.copy()
     
@@ -147,8 +142,6 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
     # Create new columns on the data frame and iniate them with zeros.
     df[flag_heat] = 0
     df[flag_unique_heat] = 0
-    df['p90_max'] = np.nan
-    df['p90_min'] = np.nan
 
     # Variable that labels unique heatwaves, each one of heatwaves will have a unique integer number
     which_heat_wave = 1
@@ -163,21 +156,30 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
         # organize data to get the percentiles
         max_t = []
         min_t = []
-        for day in df_pct[day_name].unique():
-            mx = df_pct[df_pct[day_name] == day][max_tmp_name].unique()
-            max_t.append(mx)
-        
-        for day in df_pct[day_name].unique():
-            mn = df_pct[df_pct[day_name] == day][min_tmp_name].unique()
-            min_t.append(mn)
-        
-        # get the percentiles
-        pth_max = np.percentile(np.asarray(max_t), percentile)
-        pth_min = np.percentile(np.asarray(min_t), percentile)   
-        
-        # save percentiles
-        df.loc[(data[day_name] == d) , 'p90_max'] = pth_max
-        df.loc[(data[day_name] == d) , 'p90_min'] = pth_min
+        if index == 'CTX90pct':
+            df['p90_max'] = np.nan
+            for day in df_pct[day_name].unique():
+                mx = df_pct[df_pct[day_name] == day][max_tmp_name].unique()
+                max_t.append(mx)
+                
+            # get the percentile
+            pth_max = np.percentile(np.asarray(max_t), percentile)
+            # save percentiles
+            df.loc[(data[day_name] == d) , 'p90_max'] = pth_max
+            
+        elif index == 'CTN90pct':
+            df['p90_min'] = np.nan
+            for day in df_pct[day_name].unique():
+                mn = df_pct[df_pct[day_name] == day][min_tmp_name].unique()
+                min_t.append(mn)
+                
+            # get the percentile    
+            pth_min = np.percentile(np.asarray(min_t), percentile)
+            # save percentiles        
+            df.loc[(data[day_name] == d) , 'p90_min'] = pth_min
+        else:
+            print('You should pass a valid index (CTX90pct or CTN90pct)')
+            return
     
     itera = iter(df[day_name].unique())
     for d in itera:
