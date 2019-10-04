@@ -26,17 +26,18 @@ def ecobeeDataFrame(path):
     Output:
         A pandas data frame.
     '''
-    
+
     # column names
     dayName   = 'Day'
     yearName  = 'Year'
     monthName = 'Month'
-    nonCday   = 'Non-chronological day'
+    nonCday   = 'Julian day'
     tName     = 'Outdoor Temp (C)'
     tmaxName  = 'Max Temperature'
     tminName  = 'Min Temperature'
     dateName  = 'Date'
     
+    import datetime as dt
     
     # just open file and read the data
     file = open(path, 'r')
@@ -67,14 +68,25 @@ def ecobeeDataFrame(path):
     df[tmaxName] = np.nan
     df[tminName] = np.nan
     
-    i = 1
     for date in df[dateName].unique():
-        df.loc[ df[dateName] == date ,nonCday] = i
-        i += 1
+        d = dt.datetime.strptime(date, "%Y-%m-%d") # get datetime object
+        if d.year%4:
+            df.loc[ (df[yearName] == d.year) & (df[monthName] == d.month) & (df[dayName] == d.day), nonCday] = dt.date(1,d.month,d.day).toordinal()
+        elif d.month > 2:
+            df.loc[ (df[yearName] == d.year) & (df[monthName] == d.month) & (df[dayName] == d.day), nonCday] = dt.date(1,d.month,d.day).toordinal() + 1
+        elif d.month == 2 and d.day == 29:
+            df.loc[ (df[yearName] == d.year) & (df[monthName] == d.month) & (df[dayName] == d.day), nonCday] = 60
+        else:
+            pass
         
     for day in df[nonCday].unique():
         d = df[df[nonCday] == day]
         df.loc[df[nonCday] == day,tmaxName] = np.max(d[tName])
         df.loc[df[nonCday] == day,tminName] = np.min(d[tName])
-        
+    
     return df
+
+def appNewData(dest, path):
+    new = ecobeeDataFrame(path)
+    new['Julian day'] += dest['Julian day'].max()
+    return dest.append(new, ignore_index=True)
