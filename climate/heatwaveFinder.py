@@ -154,47 +154,45 @@ def get_heatwave(data, flag, mean_tmp_name = None, hw_name='none', index = 'CTX9
     which_heat_wave = 1
     new_hw = False
     
-    for y in df[year_name].unique():
-        df_year = df[df[year_name] == y]
-        itera = iter(df_year[day_name].unique())
+    itera = iter(df[day_name].unique())
 
-        for d in itera:
-            # For each day there will be a different pct
-            df_pct = df_year[(df_year[day_name] >= d-15) & (df_year[day_name] <= d + 15)]
-            
-            # organize data to get the percentiles
-            max_t = []
-            min_t = []
-            for day in df_pct[day_name].unique():
-                mx = df_pct[df_pct[day_name] == day][max_tmp_name].unique()
-                max_t.append(mx)
-            
-            for day in df_pct[day_name].unique():
-                mn = df_pct[df_pct[day_name] == day][min_tmp_name].unique()
-                min_t.append(mn)
-            
-            # get the percentiles
-            pth_max = np.percentile(np.asarray(max_t), percentile)
-            pth_min = np.percentile(np.asarray(min_t), percentile)   
-            
-            # save percentiles
-            df.loc[(data[year_name] == y) & (data[day_name] == d) , 'p90_max'] = pth_max
-            df.loc[(data[year_name] == y) & (data[day_name] == d) , 'p90_min'] = pth_min
+    for d in itera:
+        # For each day there will be a different pct
+        df_pct = df[(df[day_name] >= d-15) & (df[day_name] <= d + 15)]
         
-        itera = iter(df_year[day_name].unique())
-        for d in itera:
+        # organize data to get the percentiles
+        max_t = []
+        min_t = []
+        for day in df_pct[day_name].unique():
+            mx = df_pct[df_pct[day_name] == day][max_tmp_name].unique()
+            max_t.append(mx)
+        
+        for day in df_pct[day_name].unique():
+            mn = df_pct[df_pct[day_name] == day][min_tmp_name].unique()
+            min_t.append(mn)
+        
+        # get the percentiles
+        pth_max = np.percentile(np.asarray(max_t), percentile)
+        pth_min = np.percentile(np.asarray(min_t), percentile)   
+        
+        # save percentiles
+        df.loc[(data[day_name] == d) , 'p90_max'] = pth_max
+        df.loc[(data[day_name] == d) , 'p90_min'] = pth_min
+    
+    itera = iter(df[day_name].unique())
+    for d in itera:
+        
+        # verify if it was registered temperatures above the percentils
+        if init_hw(df,d,index = index,max_tmp_name = max_tmp_name, min_tmp_name = min_tmp_name, day_name = day_name):
             
-            # verify if it was registered temperatures above the percentils
-            if init_hw(df_year,d,index = index,max_tmp_name = max_tmp_name, min_tmp_name = min_tmp_name, day_name = day_name):
-                
-                # label the heat wave encountered on the data frame
-                new_hw = True
-                df.loc[(df[year_name] == y) & (df[day_name] == d) , flag_heat] = 1
-                df.loc[(data[year_name] == y) & (data[day_name] == d) , flag_unique_heat] = which_heat_wave
-            else:
-                if(new_hw == True):
-                    which_heat_wave = which_heat_wave + 1
-                    new_hw = False
-            # Fill the data frame with its percentils for each day.
+            # label the heat wave encountered on the data frame
+            new_hw = True
+            df.loc[(df[day_name] == d) , flag_heat] = 1
+            df.loc[(data[day_name] == d) , flag_unique_heat] = which_heat_wave
+        else:
+            if(new_hw == True):
+                which_heat_wave = which_heat_wave + 1
+                new_hw = False
+        # Fill the data frame with its percentils for each day.
             
     return df
