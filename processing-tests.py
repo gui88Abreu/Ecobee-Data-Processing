@@ -6,8 +6,11 @@ Created on Wed Sep 18 14:57:37 2019
 @author: guilherme
 """
 #importing libraries
-import climate.heatwaveFinder as hwf
 import ecobee.preprocessing as pp
+
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 flag     = '0 (not HW)/ 1 (HW)'
 hw_name  = 'HeatWaves'
@@ -17,7 +20,7 @@ temp_col = 'Max Temperature'
 tt_temp  = 'Outdoor Temp (C)'
 
 print('Generating Data Frame...')
-for i in range(1,7):
+for i in range(1,11):
 
     try:
         path = '../data_set/ecobee/House1/'+str(i)+'.csv'
@@ -29,16 +32,8 @@ for i in range(1,7):
         print('Something went wrong with this file: '+str(i)+'.csv')
 df[day_col] -= df[day_col].min() - 1
 df = pp.getmxtmp(df)
+df = pp.getmeantmp(df)
+df = pp.gettimeon(df)
 print('Done!')
 
-print('Finding Heatwaves...')
-fv = hwf.get_heatwave(data=df, 
-                      flag=flag, 
-                      hw_name=hw_name, 
-                      day_name = day_col, 
-                      year_name = year_col,
-                      max_tmp_name = temp_col)
-print('Done!')
-
-res_df = fv[[day_col,temp_col,hw_name,'p90_max']]
-print('Heatwaves encountered: ', res_df[hw_name].max())
+test_df = df[[day_col, 'Time','System Mode','Current Temp (C)', 'Outdoor Temp (C)', 'Mean Temperature', 'Temperature Standard Deviation', 'Time on (Min)']]
