@@ -18,7 +18,11 @@ nonCday   = 'Days in Order'
 tName     = 'Outdoor Temp (C)'
 tmaxName  = 'Max Temperature'
 tminName  = 'Min Temperature'
+tmeanName = 'Mean Temperature'
+stdName   = 'Temperature Standard Deviation'
 dateName  = 'Date'
+tonName   = 'Time on (Min)'
+sysMName  = 'System Mode'
 
 def ecobeeDataFrame(path):
     '''
@@ -64,8 +68,6 @@ def ecobeeDataFrame(path):
     df[monthName] = date[:,1]
     df[dayName]   = date[:,2]
     df[nonCday] = 0
-    df[tmaxName] = np.nan
-    df[tminName] = np.nan
     
     for date in df[dateName].unique():
         d = dt.datetime.strptime(date, "%Y-%m-%d") # get datetime object
@@ -75,12 +77,58 @@ def ecobeeDataFrame(path):
 
 def appendNewData(dest, path):
     new = ecobeeDataFrame(path)
-    return dest.append(new, ignore_index=True)
+    return dest.append(new, ignore_index=True, sort=True)
 
 def getmxtmp(dataframe):
     df = dataframe.copy()
+    
+    df[tmaxName] = np.nan
+    df[tminName] = np.nan
+    
     for day in df[nonCday].unique():
         d = df[df[nonCday] == day]
         df.loc[df[nonCday] == day,tmaxName] = np.max(d[tName])
         df.loc[df[nonCday] == day,tminName] = np.min(d[tName])
+    return df
+
+def getmeantmp(dataframe):
+    df = dataframe.copy()
+    
+    df[tmeanName] = np.nan
+    df[stdName] = np.nan
+    
+    for day in df[nonCday].unique():
+        d = df[df[nonCday] == day]
+        df.loc[df[nonCday] == day,stdName] = round(np.std(d[tName]), 2)
+        df.loc[df[nonCday] == day,tmeanName] = np.mean(d[tName])
+    return df
+
+def gettimeon(dataframe):
+    df = dataframe.copy()
+    
+    df[tonName] = np.nan
+    
+    for day in df[nonCday].unique():
+        d = df[df[nonCday] == day]
+        modes = d[sysMName].values
+        clock = d['Time'].values
+        clock = [x.split(':') for x in clock]
+        
+        count = 0
+        i = 0
+        while i < len(modes):
+            if modes[i].endswith("On"):
+                b = int(clock[i][0])*60 + int(clock[i][1])
+                i+=1
+                while i < len(modes) and modes[i].endswith("On"):
+                    i+=1
+                if i < len(modes):
+                    a = int(clock[i][0])*60 + int(clock[i][1])
+                else:
+                    a = 1440
+                    
+                count += a - b
+            i+=1
+        
+        df.loc[df[nonCday] == day,tonName] = count
     return df
