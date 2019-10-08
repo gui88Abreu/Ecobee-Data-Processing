@@ -15,14 +15,28 @@ dayName   = 'Day'
 yearName  = 'Year'
 monthName = 'Month'
 nonCday   = 'Days in Order'
-tName     = 'Outdoor Temp (C)'
-tmaxName  = 'Max Temperature'
-tminName  = 'Min Temperature'
-tmeanName = 'Mean Temperature'
-stdName   = 'Temperature Standard Deviation'
+
 dateName  = 'Date'
 tonName   = 'Time on (Min)'
 sysMName  = 'System Mode'
+
+hName     = 'Current Humidity (%RH)'
+ctName    = 'Current Temp (C)'
+tName     = 'Outdoor Temp (C)'
+
+hmaxName  = 'Max Humidity (%RH)'
+ctmaxNam  = 'Max Cur Temp (C)'
+tmaxName  = 'Max Temp (C)'
+
+hminName  = 'Min Humidity (%RH)'
+ctminNam  = 'Min Cur Temp (C)'
+tminName  = 'Min Temp (C)'
+
+hmeanName = 'Mean Hum (C)'
+ctmnName  = 'Mean Cur Temp (C)'
+tmeanName = 'Mean Temp (C)'
+
+stdName   = 'Temperature Standard Deviation'
 
 def ecobeeDataFrame(path):
     '''
@@ -62,6 +76,8 @@ def ecobeeDataFrame(path):
     date = np.asarray([d.split('-') for d in df[dateName]], dtype='uint16')
     
     df[tName] = pd.to_numeric(df[tName])
+    df[hName] = pd.to_numeric(df[tName])
+    df[ctName] = pd.to_numeric(df[tName])
     
     # create new coluns
     df[yearName]  = date[:,0]
@@ -79,35 +95,28 @@ def appendNewData(dest, path):
     new = ecobeeDataFrame(path)
     return dest.append(new, ignore_index=True, sort=True)
 
-def getmxtmp(dataframe):
+def getMxMn(dataframe, column):
     df = dataframe.copy()
     
-    df[tmaxName] = np.nan
-    df[tminName] = np.nan
+    mxmn_list = list()
+    for day in df[nonCday].unique():
+        d = df[df[nonCday] == day] 
+        mxmn_list.append([np.max(d[column]), np.min(d[column])])
+    return mxmn_list
+
+def getMean(dataframe, column, stdCol):
+    df = dataframe.copy()
     
+    mean_list = list()
     for day in df[nonCday].unique():
         d = df[df[nonCday] == day]
-        df.loc[df[nonCday] == day,tmaxName] = np.max(d[tName])
-        df.loc[df[nonCday] == day,tminName] = np.min(d[tName])
-    return df
+        mean_list.append([round(np.mean(d[column]), 2), round(np.std(d[column]), 2)])
+    return mean_list
 
-def getmeantmp(dataframe):
+def getTimeOn(dataframe):
     df = dataframe.copy()
     
-    df[tmeanName] = np.nan
-    df[stdName] = np.nan
-    
-    for day in df[nonCday].unique():
-        d = df[df[nonCday] == day]
-        df.loc[df[nonCday] == day,stdName] = round(np.std(d[tName]), 2)
-        df.loc[df[nonCday] == day,tmeanName] = np.mean(d[tName])
-    return df
-
-def gettimeon(dataframe):
-    df = dataframe.copy()
-    
-    df[tonName] = np.nan
-    
+    count_list = list()
     for day in df[nonCday].unique():
         d = df[df[nonCday] == day]
         modes = d[sysMName].values
@@ -130,5 +139,32 @@ def gettimeon(dataframe):
                 count += a - b
             i+=1
         
-        df.loc[df[nonCday] == day,tonName] = count
-    return df
+        count_list.append(count)
+    return count_list
+
+def cleanData(dataframe):
+    df = dataframe.copy()
+    
+    stdTemp  = 'Temp Standard Deviation'
+    stdHum   = 'Humidity Standard Deviation'
+    stdCT    = 'Current Temp Standard Deviation'
+    columns= [[tName, stdTemp], [hName, stdHum], [ctName, stdCT]]
+    
+    meanv = list()
+    mxmnv = list()
+    for c in columns:
+        meanv.append(np.asarray(getMean(df, c[0], c[1])))
+        mxmnv.append(np.asarray(getMxMn(df, c[0])))
+    
+    tmOn = np.asarray([getTimeOn(df)])
+    days = np.asarray([df[nonCday].unique()])
+    
+    meanv = np.concatenate((meanv[:]), axis=1)
+    mxmnv = np.concatenate((mxmnv[:]), axis=1)
+    
+    values = np.concatenate((days.T,meanv,mxmnv,tmOn.T), axis=1)
+    
+    clean_df = pd.DataFrame(values, columns = [nonCday, tmeanName, stdTemp, hmeanName, stdHum, ctmnName, stdCT, 
+                                     tmaxName, tminName, hmaxName, hminName, ctmaxNam, ctminNam, tonName])
+    
+    return clean_df
