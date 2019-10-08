@@ -5,11 +5,14 @@ Created on Wed Sep 18 14:57:37 2019
 
 @author: guilherme
 """
+
 #importing libraries
 import ecobee.preprocessing as pp
 
+'''
 import numpy as np
 import matplotlib.pyplot as plt
+'''
 
 
 flag     = '0 (not HW)/ 1 (HW)'
@@ -31,9 +34,9 @@ for i in range(1,11):
     except:
         print('Something went wrong with this file: '+str(i)+'.csv')
 df[day_col] -= df[day_col].min() - 1
-df = pp.getmxtmp(df)
-df = pp.getmeantmp(df)
-df = pp.gettimeon(df)
 print('Done!')
 
-test_df = df[[day_col, 'Time','System Mode','Current Temp (C)', 'Outdoor Temp (C)', 'Mean Temperature', 'Temperature Standard Deviation', 'Time on (Min)']]
+
+print('Cleaning Up the Data...')
+cln_df = pp.cleanData(df)
+print('Done')
