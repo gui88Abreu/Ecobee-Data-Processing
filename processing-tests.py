@@ -9,19 +9,7 @@ Created on Wed Sep 18 14:57:37 2019
 #importing libraries
 import ecobee.preprocessing as pp
 
-'''
-import numpy as np
-import matplotlib.pyplot as plt
-'''
-
-
-flag     = '0 (not HW)/ 1 (HW)'
-hw_name  = 'HeatWaves'
-year_col = 'Year'
-day_col  = 'Days in Order'
-temp_col = 'Max Temperature'
-tt_temp  = 'Outdoor Temp (C)'
-
+# generate a data frame from the ecobee csv file
 print('Generating Data Frame...')
 for i in range(1,11):
 
@@ -33,10 +21,15 @@ for i in range(1,11):
             df = pp.appendNewData(df,path)
     except:
         print('Something went wrong with this file: '+str(i)+'.csv')
-df[day_col] -= df[day_col].min() - 1
+
+# shift all days untill the first day be 1
+df[pp.nonCday] -= df[pp.nonCday].min() - 1
 print('Done!')
 
-
+# select just the most important data e calculate important parameters like mean, max, and min temperatures
 print('Cleaning Up the Data...')
 cln_df = pp.cleanData(df)
 print('Done')
+
+print("Mean Temperature x Device On")
+pp.plot_TxD(cln_df)
