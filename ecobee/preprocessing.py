@@ -36,7 +36,9 @@ hmeanName = 'Mean Hum (%RH)'
 ctmnName  = 'Mean Cur Temp (C)'
 tmeanName = 'Mean Temp (C)'
 
-stdName   = 'Temperature Standard Deviation'
+stdTemp  = 'Temp Standard Deviation'
+stdHum   = 'Humidity Standard Deviation'
+stdCT    = 'Current Temp Standard Deviation'
 
 def ecobeeDataFrame(path):
     '''
@@ -76,8 +78,8 @@ def ecobeeDataFrame(path):
     date = np.asarray([d.split('-') for d in df[dateName]], dtype='uint16')
     
     df[tName] = pd.to_numeric(df[tName])
-    df[hName] = pd.to_numeric(df[tName])
-    df[ctName] = pd.to_numeric(df[tName])
+    df[hName] = pd.to_numeric(df[hName])
+    df[ctName] = pd.to_numeric(df[ctName])
     
     # create new coluns
     df[yearName]  = date[:,0]
@@ -145,9 +147,6 @@ def getTimeOn(dataframe):
 def cleanData(dataframe):
     df = dataframe.copy()
     
-    stdTemp  = 'Temp Standard Deviation'
-    stdHum   = 'Humidity Standard Deviation'
-    stdCT    = 'Current Temp Standard Deviation'
     columns= [[tName, stdTemp], [hName, stdHum], [ctName, stdCT]]
     
     meanv = list()
@@ -178,18 +177,19 @@ def plot_TxD(dataframe):
         A clean data frame of the same type of the returning data frame of the funtion cleanData().
     '''
     import matplotlib.pyplot as plt
-    import numpy as np
     
     cln_df = dataframe.copy()
     
-    min_t = cln_df['Mean Temp (C)'].min()
-    max_t = cln_df['Mean Temp (C)'].max()
+    # get boundaries and bands
+    min_t = cln_df[tmeanName].min()
+    max_t = cln_df[tmeanName].max()
     temp = np.arange(min_t+5,max_t+5,5)
     mean = []
     std = []
     
+    # get mean time on and the respectives standard deviations
     for t in temp:
-        f = cln_df.loc[(cln_df['Mean Temp (C)'] < t) & (cln_df['Mean Temp (C)'] > t - 5), 'Time on (min)']
+        f = cln_df.loc[(cln_df[tmeanName] < t) & (cln_df[tmeanName] > t - 5), tonName]
         mean.append(f.sum()/f.size)
         std.append(np.std(f))
             
@@ -203,7 +203,7 @@ def plot_TxD(dataframe):
     ax.set_xlabel('Mean Temperature Band (C)')
     ax.set_ylabel('Device On Mean Time (min/day)')
     
-    # Major ticks every 20, minor ticks every 5
+    # Major ticks every 20, minor ticks every 1
     major_ticks = np.arange(0, int(np.max(y))+50, 20)
     minor_ticks = np.arange(int(min_t)-5, int(max_t)+5, 1)
     
@@ -214,4 +214,35 @@ def plot_TxD(dataframe):
     ax.grid(which='major', alpha=0.5)
     
     plt.errorbar(x, y, yerr = e, ecolor = 'r', linestyle='None', marker='d')
+    plt.show()
+    
+def plot_DayxTcTo(dataframe):
+    import matplotlib.pyplot as plt
+    import pylab as pl
+    
+    # get values
+    x, y, t = dataframe[tmeanName].values, dataframe[ctmnName].values, dataframe[nonCday].values
+    
+    # remove nan from x and y
+    x, y, t = x[~np.isnan(x)], y[~np.isnan(x)], t[~np.isnan(x)]
+    x, y, t = x[~np.isnan(y)], y[~np.isnan(y)], t[~np.isnan(y)]
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    
+    ax.set_xlabel('day')
+    ax.set_ylabel('Temperature (C)')
+    
+    # Major ticks every 20, minor ticks every 1
+    major_ticks = np.arange(-20, 40, 1)
+    minor_ticks = np.arange(0, t[-1]+5, 5)
+    
+    ax.set_xticks(minor_ticks, minor=True)
+    ax.set_yticks(major_ticks, minor=True)
+    
+    ax.grid(which='both')
+    
+    ax.plot(t, x, 'r', linestyle='-', label = 'Outside Temperature')
+    ax.plot(t, y, 'b', linestyle='-', label = 'Inside Temperature')
+    pl.legend(loc='lower right')
     plt.show()
