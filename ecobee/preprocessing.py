@@ -197,7 +197,7 @@ def plot_TxD(dataframe):
     y = mean
     e = std
     
-    fig = plt.figure()
+    fig = plt.figure(figsize = (16,12))
     ax = fig.add_subplot(1, 1, 1)
     
     ax.set_xlabel('Mean Temperature Band (C)')
@@ -227,7 +227,7 @@ def plot_DayxTcTo(dataframe):
     x, y, t = x[~np.isnan(x)], y[~np.isnan(x)], t[~np.isnan(x)]
     x, y, t = x[~np.isnan(y)], y[~np.isnan(y)], t[~np.isnan(y)]
     
-    fig = plt.figure()
+    fig = plt.figure(figsize = (16,12))
     ax = fig.add_subplot(1, 1, 1)
     
     ax.set_xlabel('day')
