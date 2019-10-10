@@ -32,7 +32,7 @@ hminName  = 'Min Humidity (%RH)'
 ctminNam  = 'Min Cur Temp (C)'
 tminName  = 'Min Temp (C)'
 
-hmeanName = 'Mean Hum (C)'
+hmeanName = 'Mean Hum (%RH)'
 ctmnName  = 'Mean Cur Temp (C)'
 tmeanName = 'Mean Temp (C)'
 
@@ -200,8 +200,8 @@ def plot_TxD(dataframe):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     
-    ax.set_xlabel('Mean Temperature Band')
-    ax.set_ylabel('Devive On Mean Time')
+    ax.set_xlabel('Mean Temperature Band (C)')
+    ax.set_ylabel('Device On Mean Time (min/day)')
     
     # Major ticks every 20, minor ticks every 5
     major_ticks = np.arange(0, int(np.max(y))+50, 20)
