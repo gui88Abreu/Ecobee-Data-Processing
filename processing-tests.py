@@ -33,3 +33,6 @@ print('Done')
 
 print("Mean Temperature x Device On")
 pp.plot_TxD(cln_df)
+
+print("Day x Outside and Inside Temperature")
+pp.plot_DayxTcTo(cln_df)
