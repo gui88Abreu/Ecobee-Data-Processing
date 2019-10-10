@@ -17,7 +17,7 @@ monthName = 'Month'
 nonCday   = 'Days in Order'
 
 dateName  = 'Date'
-tonName   = 'Time on (Min)'
+tonName   = 'Time on (min)'
 sysMName  = 'System Mode'
 
 hName     = 'Current Humidity (%RH)'
@@ -168,3 +168,50 @@ def cleanData(dataframe):
                                      tmaxName, tminName, hmaxName, hminName, ctmaxNam, ctminNam, tonName])
     
     return clean_df
+
+def plot_TxD(dataframe):
+    '''
+    Description:
+        It receives a clean dataframe object and plot the relation between the temperature bands
+        and the mean time that the user let the device on. Each band has a width of 5 Celsius degrees.
+    Input:
+        A clean data frame of the same type of the returning data frame of the funtion cleanData().
+    '''
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    cln_df = dataframe.copy()
+    
+    min_t = cln_df['Mean Temp (C)'].min()
+    max_t = cln_df['Mean Temp (C)'].max()
+    temp = np.arange(min_t+5,max_t+5,5)
+    mean = []
+    std = []
+    
+    for t in temp:
+        f = cln_df.loc[(cln_df['Mean Temp (C)'] < t) & (cln_df['Mean Temp (C)'] > t - 5), 'Time on (min)']
+        mean.append(f.sum()/f.size)
+        std.append(np.std(f))
+            
+    x = temp
+    y = mean
+    e = std
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    
+    ax.set_xlabel('Mean Temperature Band')
+    ax.set_ylabel('Devive On Mean Time')
+    
+    # Major ticks every 20, minor ticks every 5
+    major_ticks = np.arange(0, int(np.max(y))+50, 20)
+    minor_ticks = np.arange(int(min_t)-5, int(max_t)+5, 1)
+    
+    ax.set_xticks(minor_ticks, minor=True)
+    ax.set_yticks(major_ticks, minor=True)
+    
+    ax.grid(which='minor', alpha=1)
+    ax.grid(which='major', alpha=0.5)
+    
+    plt.errorbar(x, y, yerr = e, ecolor = 'r', linestyle='None', marker='d')
+    plt.show()
