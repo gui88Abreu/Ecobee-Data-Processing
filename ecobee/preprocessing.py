@@ -204,7 +204,7 @@ def plot_TxD(dataframe):
     ax.set_ylabel('Device On Mean Time (min/day)')
     
     # Major ticks every 20, minor ticks every 1
-    major_ticks = np.arange(0, int(np.max(y))+50, 20)
+    major_ticks = np.arange(0, int(np.max(y))+int(np.max(e) + 50 ), 20)
     minor_ticks = np.arange(int(min_t)-5, int(max_t)+5, 1)
     
     ax.set_xticks(minor_ticks, minor=True)
