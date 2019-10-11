@@ -9,18 +9,19 @@ Created on Wed Sep 18 14:57:37 2019
 #importing libraries
 import ecobee.preprocessing as pp
 
+path = '../data_set/ecobee/House1/'
+
 # generate a data frame from the ecobee csv file
 print('Generating Data Frame...')
 for i in range(1,11):
 
     try:
-        path = '../data_set/ecobee/House1/'+str(i)+'.csv'
         if i == 1:
-            df = pp.ecobeeDataFrame(path)
+            df = pp.ecobeeDataFrame(path+str(i)+'.csv')
         else:
-            df = pp.appendNewData(df,path)
+            df = pp.appendNewData(df,path+str(i)+'.csv')
     except:
-        print('Something went wrong with this file: '+str(i)+'.csv')
+        quit('Something went wrong with this file: '+str(i)+'.csv')
 
 # shift all days untill the first day be 1
 df[pp.nonCday] -= df[pp.nonCday].min() - 1
