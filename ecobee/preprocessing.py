@@ -24,21 +24,21 @@ hName     = 'Current Humidity (%RH)'
 ctName    = 'Current Temp (C)'
 tName     = 'Outdoor Temp (C)'
 
-hmaxName  = 'Max Humidity (%RH)'
-ctmaxNam  = 'Max Cur Temp (C)'
-tmaxName  = 'Max Temp (C)'
+hmaxName  = 'Max Inside Humidity (%RH)'
+ctmaxNam  = 'Max Inside Temp (C)'
+tmaxName  = 'Max Outside Temp (C)'
 
-hminName  = 'Min Humidity (%RH)'
-ctminNam  = 'Min Cur Temp (C)'
-tminName  = 'Min Temp (C)'
+hminName  = 'Min inside Humidity (%RH)'
+ctminNam  = 'Min Inside Temp (C)'
+tminName  = 'Min Outside Temp (C)'
 
-hmeanName = 'Mean Hum (%RH)'
-ctmnName  = 'Mean Cur Temp (C)'
-tmeanName = 'Mean Temp (C)'
+hmeanName = 'Mean Inside Hum (%RH)'
+ctmnName  = 'Mean Inside Temp (C)'
+tmeanName = 'Mean Outside Temp (C)'
 
-stdTemp  = 'Temp Standard Deviation'
-stdHum   = 'Humidity Standard Deviation'
-stdCT    = 'Current Temp Standard Deviation'
+stdTemp   = 'Outside Temp Standard Deviation'
+stdHum    = 'Inside Humidity Standard Deviation'
+stdCT     = 'Inside Temp Standard Deviation'
 
 def ecobeeDataFrame(path):
     '''
@@ -242,7 +242,7 @@ def plot_DayxTcTo(dataframe):
     
     ax.grid(which='both')
     
-    ax.plot(t, x, 'r', linestyle='-', label = 'Outside Temperature')
-    ax.plot(t, y, 'b', linestyle='-', label = 'Inside Temperature')
+    ax.plot(t, x, 'r', linestyle=':', label = 'Outside Temperature', marker='o')
+    ax.plot(t, y, 'b', linestyle=':', label = 'Inside Temperature' , marker='o')
     pl.legend(loc='lower right')
     plt.show()
