@@ -23,22 +23,27 @@ sysMName  = 'System Mode'
 hName     = 'Current Humidity (%RH)'
 ctName    = 'Current Temp (C)'
 tName     = 'Outdoor Temp (C)'
+wsName    = 'Wind Speed (km/h)'
 
 hmaxName  = 'Max Inside Humidity (%RH)'
 ctmaxNam  = 'Max Inside Temp (C)'
 tmaxName  = 'Max Outside Temp (C)'
+wsmaxNam  = 'Max Wind Speed (km/h)'
 
 hminName  = 'Min inside Humidity (%RH)'
 ctminNam  = 'Min Inside Temp (C)'
 tminName  = 'Min Outside Temp (C)'
+wsminNam  = 'Min Wind Speed (km/h)'
 
 hmeanName = 'Mean Inside Hum (%RH)'
 ctmnName  = 'Mean Inside Temp (C)'
 tmeanName = 'Mean Outside Temp (C)'
+wsmnNam   = 'Mean Wind Speed (km/h)'
 
-stdTemp   = 'Outside Temp Standard Deviation'
-stdHum    = 'Inside Humidity Standard Deviation'
-stdCT     = 'Inside Temp Standard Deviation'
+stdTemp   = 'Outside Temp Standard Deviation (C)'
+stdHum    = 'Inside Humidity Standard Deviation (%RH)'
+stdCT     = 'Inside Temp Standard Deviation (C)'
+stdWS     = 'Wind Speed Standard Deviation (km/h)'
 
 def ecobeeDataFrame(path):
     '''
@@ -74,9 +79,10 @@ def ecobeeDataFrame(path):
     df = pd.DataFrame(data, columns=columns)
     date = np.asarray([d.split('-') for d in df[dateName]], dtype='uint16')
     
-    df[tName] = pd.to_numeric(df[tName])
-    df[hName] = pd.to_numeric(df[hName])
+    df[tName]  = pd.to_numeric(df[tName])
+    df[hName]  = pd.to_numeric(df[hName])
     df[ctName] = pd.to_numeric(df[ctName])
+    df[wsName] = pd.to_numeric(df[wsName])
     
     # create new coluns
     df[yearName]  = date[:,0]
@@ -208,7 +214,7 @@ def cleanData(dataframe):
     
     df = dataframe.copy()
     
-    columns= [tName, hName, ctName]
+    columns= [tName, hName, ctName, wsName]
     
     meanv = list()
     mxmnv = list()
@@ -224,8 +230,19 @@ def cleanData(dataframe):
     
     values = np.concatenate((days.T,meanv,mxmnv,tmOn.T), axis=1)
     
-    clean_df = pd.DataFrame(values, columns = [nonCday, tmeanName, stdTemp, hmeanName, stdHum, ctmnName, stdCT, 
-                                     tmaxName, tminName, hmaxName, hminName, ctmaxNam, ctminNam, tonName])
+    
+    cln_columns = [nonCday, 
+                  tmeanName, stdTemp, 
+                  hmeanName, stdHum, 
+                  ctmnName, stdCT,
+                  wsmnNam, stdWS,
+                  tmaxName, tminName, 
+                  hmaxName, hminName, 
+                  ctmaxNam, ctminNam,
+                  wsmaxNam, wsminNam,
+                  tonName]
+    
+    clean_df = pd.DataFrame(values, columns = cln_columns)
     
     return clean_df
 
