@@ -46,10 +46,7 @@ def ecobeeDataFrame(path):
         dayName             = 'Day'
         yearName            = 'Year'
         monthName           = 'Month'
-        nonChronologicalDay = 'Days in Order'
-        maxTemperatureName  = 'Max Temperature'
-        minTemperatureName  = 'Min Temperature'
-    
+        nonChronologicalDay = 'Days in Order'    
     Input:
         path: The path of the report file.
         
@@ -94,10 +91,36 @@ def ecobeeDataFrame(path):
     return df
 
 def appendNewData(dest, path):
+    '''
+    Description:
+        It receives a ecobee data frame as input append 
+        a new data set to it and return it.
+    Input:
+        datframe: An ecobee data frame.
+    Output:
+        It returns a new data frame with the new ecobee data set appended to dest.
+    '''
+    
     new = ecobeeDataFrame(path)
     return dest.append(new, ignore_index=True, sort=True)
 
 def getMxMn(dataframe, column):
+    '''
+    Description:
+        It receives a ecobee data frame as input and compute max and min value 
+        of the specified column passed for each day. It returns a list with the 
+        values for each day.
+    Input:
+        datframe: An ecobee data frame.
+        
+        column: The name of the column of interest.
+    Output:
+        A sorted list with list containing max and min value for each day. 
+        As the following example:
+            
+        returning list := [[max1,min1], [max2,min2], ...,[maxN,minN]]
+    '''
+    
     df = dataframe.copy()
     
     mxmn_list = list()
@@ -106,7 +129,22 @@ def getMxMn(dataframe, column):
         mxmn_list.append([np.max(d[column]), np.min(d[column])])
     return mxmn_list
 
-def getMean(dataframe, column, stdCol):
+def getMean(dataframe, column):
+    '''
+    Description:
+        It receives a ecobee data frame as input and compute mean and standard 
+        deviation of the specified column passed for each day. It returns a list 
+        with the values for each day.
+    Input:
+        datframe: An ecobee data frame.
+        
+        column: The name of the column of interest.
+    Output:
+        A sorted list with list containing mean and stddev for each day. 
+        As the following example:
+            
+        returning list := [[mean1,stddev1], [mean2,stddev2], ...,[meanN,stddevN]]
+    '''
     df = dataframe.copy()
     
     mean_list = list()
@@ -116,6 +154,17 @@ def getMean(dataframe, column, stdCol):
     return mean_list
 
 def getTimeOn(dataframe):
+    '''
+    Description:
+        It receives a ecobee data frame as input and compute how much time the device 
+        that controls temperature was left on. It returns a list with the values for 
+        each day.
+    Input:
+        An ecobee data frame.
+    Output:
+        A sorted list with each time that the device was left on mode on for each day.
+    '''
+    
     df = dataframe.copy()
     
     count_list = list()
@@ -145,15 +194,27 @@ def getTimeOn(dataframe):
     return count_list
 
 def cleanData(dataframe):
+    '''
+    Description:
+        It receives a ecobee data frame as input and compute some data as mean, 
+        max and min from Outside and Inside measures. It returns a new data frame
+        with these values.
+    Input:
+        An ecobee data frame.
+    Output:
+        A simplified data frame containing mean, standard deviation, max, and
+        min values from Inside and Outside Humidity and Temperature.
+    '''
+    
     df = dataframe.copy()
     
-    columns= [[tName, stdTemp], [hName, stdHum], [ctName, stdCT]]
+    columns= [tName, hName, ctName]
     
     meanv = list()
     mxmnv = list()
     for c in columns:
-        meanv.append(np.asarray(getMean(df, c[0], c[1])))
-        mxmnv.append(np.asarray(getMxMn(df, c[0])))
+        meanv.append(np.asarray(getMean(df, c)))
+        mxmnv.append(np.asarray(getMxMn(df, c)))
     
     tmOn = np.asarray([getTimeOn(df)])
     days = np.asarray([df[nonCday].unique()])
@@ -217,6 +278,13 @@ def plot_TxD(dataframe):
     plt.show()
     
 def plot_DayxTcTo(dataframe):
+    '''
+    Description:
+        It receives a clean dataframe object and plot Inside temperature 
+        and Outside Temperature for each day of measurement.
+    Input:
+        A clean data frame of the same type of the returning data frame of the funtion cleanData().
+    '''
     import matplotlib.pyplot as plt
     import pylab as pl
     
