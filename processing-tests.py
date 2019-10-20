@@ -8,6 +8,7 @@ Created on Wed Sep 18 14:57:37 2019
 
 #importing libraries
 import ecobee.preprocessing as pp
+import numpy as np
 
 path = '../data_set/ecobee/House1/'
 
@@ -37,3 +38,14 @@ pp.plot_TxD(cln_df)
 
 print("Day x Outside and Inside Temperature")
 pp.plot_DayxTcTo(cln_df)
+
+'''
+It creates a copý of the original dataframe in order to have another 
+dataframe that contains time colummn as numbers other than strings.
+It makes animated plot faster.
+'''
+new_df = df.copy()
+new_df[pp.timeName] = np.arange(5,new_df.shape[0]*5 + 1, 5)
+
+pp.animated_plot(new_df[(new_df[pp.nonCday] >= 1) & (new_df[pp.nonCday] <= 5)],'tmp_animation.mp4',
+                         columns=[pp.tName,pp.ctName, pp.timeName], nFrames = 900)
