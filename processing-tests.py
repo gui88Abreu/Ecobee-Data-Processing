@@ -42,10 +42,12 @@ pp.plot_DayxTcTo(cln_df)
 '''
 It creates a copý of the original dataframe in order to have another 
 dataframe that contains time colummn as numbers other than strings.
-It makes animated plot faster.
+It makes animated plot faster. It also change the time column name
+from "Time" to "Time (min)"
 '''
 new_df = df.copy()
 new_df[pp.timeName] = np.arange(5,new_df.shape[0]*5 + 1, 5)
+new_df.rename(columns={pp.timeName: pp.timeName+' (min)'}, inplace=True)
 
 pp.animated_plot(new_df[(new_df[pp.nonCday] >= 1) & (new_df[pp.nonCday] <= 5)],'tmp_animation.mp4',
-                         columns=[pp.tName,pp.ctName, pp.timeName], nFrames = 900)
+                         columns=[pp.tName,pp.ctName, pp.timeName+' (min)'], nFrames = 900)
