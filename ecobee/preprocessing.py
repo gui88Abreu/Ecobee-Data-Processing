@@ -6,10 +6,6 @@ Created on Thu Sep 26 18:45:31 2019
 @author: guilherme
 """
 
-#importing libraries
-import pandas as pd
-import numpy as np
-
 # macro names
 dayName   = 'Day'
 yearName  = 'Year'
@@ -19,6 +15,7 @@ nonCday   = 'Days in Order'
 dateName  = 'Date'
 tonName   = 'Time on (min)'
 sysMName  = 'System Mode'
+timeName  = 'Time'
 
 hName     = 'Current Humidity (%RH)'
 ctName    = 'Current Temp (C)'
@@ -58,6 +55,8 @@ def ecobeeDataFrame(path):
     Output:
         A pandas data frame.
     '''
+    import pandas as pd
+    import numpy as np
     import datetime as dt
     
     # just open file and read the data
@@ -126,6 +125,7 @@ def getMxMn(dataframe, column):
             
         returning list := [[max1,min1], [max2,min2], ...,[maxN,minN]]
     '''
+    import numpy as np
     
     df = dataframe.copy()
     
@@ -151,6 +151,8 @@ def getMean(dataframe, column):
             
         returning list := [[mean1,stddev1], [mean2,stddev2], ...,[meanN,stddevN]]
     '''
+    import numpy as np
+    
     df = dataframe.copy()
     
     mean_list = list()
@@ -211,6 +213,8 @@ def cleanData(dataframe):
         A simplified data frame containing mean, standard deviation, max, and
         min values from Inside and Outside Humidity and Temperature.
     '''
+    import pandas as pd
+    import numpy as np
     
     df = dataframe.copy()
     
@@ -255,6 +259,7 @@ def plot_TxD(dataframe):
         A clean data frame of the same type of the returning data frame of the funtion cleanData().
     '''
     import matplotlib.pyplot as plt
+    import numpy as np
     
     cln_df = dataframe.copy()
     
@@ -300,17 +305,20 @@ def plot_DayxTcTo(dataframe):
         It receives a clean dataframe object and plot Inside temperature 
         and Outside Temperature for each day of measurement.
     Input:
-        A clean data frame of the same type of the returning data frame of the funtion cleanData().
+        A clean data frame of the same type of the returning data frame of the funtion ecobee.preprocessing.cleanData().
     '''
     import matplotlib.pyplot as plt
     import pylab as pl
+    import numpy as np
     
     # get values
     x, y, t = dataframe[tmeanName].values, dataframe[ctmnName].values, dataframe[nonCday].values
     
     # remove nan from x and y
-    x, y, t = x[~np.isnan(x)], y[~np.isnan(x)], t[~np.isnan(x)]
-    x, y, t = x[~np.isnan(y)], y[~np.isnan(y)], t[~np.isnan(y)]
+    fltr = ~np.isnan(x)
+    x, y, t = x[fltr], y[fltr], t[fltr]
+    fltr = ~np.isnan(y)
+    x, y, t = x[fltr], y[fltr], t[fltr]
     
     fig = plt.figure(figsize = (16,12))
     ax = fig.add_subplot(1, 1, 1)
@@ -327,7 +335,52 @@ def plot_DayxTcTo(dataframe):
     
     ax.grid(which='both')
     
-    ax.plot(t, x, 'r', linestyle=':', label = 'Outside Temperature', marker='o')
-    ax.plot(t, y, 'b', linestyle=':', label = 'Inside Temperature' , marker='o')
+    ax.plot(t, x, 'darkblue', linestyle='--', label = 'Outside Temperature', marker='o')
+    ax.plot(t, y, 'lime', linestyle='--', label = 'Inside Temperature' , marker='o')
     pl.legend(loc='lower right')
+    plt.show()
+    
+def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, nfps = 30, nInterval = 500):
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    import pylab as pl
+    import numpy as np
+    
+    # get values
+    x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
+    
+    # remove nan from x and y
+    fltr = ~np.isnan(x)
+    x, y, t = x[fltr], y[fltr], t[fltr]
+    fltr = ~np.isnan(y)
+    x, y, t = x[fltr], y[fltr], t[fltr]
+    
+    fig = plt.figure(figsize = (24,16))
+    ax = fig.add_subplot(1, 1, 1)
+    
+    ax.set_xlabel(columns[2])
+    ax.set_ylabel(columns[0]+' and '+ columns[1])
+    
+    line = list()
+    ax1, = ax.plot(t, x, 'darkblue', label = columns[0])
+    ax2, = ax.plot(t, y, 'lime', label = columns[1])
+    line.append(ax1)
+    line.append(ax2)
+    pl.legend(loc='lower right')
+    
+    def init():  # only required for blitting to give a clean slate.
+        line[0].set_data([], [])
+        line[1].set_data([], [])
+        return line
+    
+    def animate(i):
+        line[0].set_data(t[:i], x[:i])
+        line[1].set_data(t[:i], y[:i])
+        return line
+        
+    ani = animation.FuncAnimation(
+        fig, animate, init_func=init, interval=nInterval, blit=True, save_count=50, frames=nFrames)
+    
+    ani.save(fileName, fps=nfps, extra_args=['-vcodec', 'libx264'])
+    
     plt.show()
