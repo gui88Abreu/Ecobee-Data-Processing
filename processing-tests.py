@@ -42,12 +42,30 @@ pp.plot_DayxTcTo(cln_df)
 '''
 It creates a copý of the original dataframe in order to have another 
 dataframe that contains time colummn as numbers other than strings.
-It makes animated plot faster. It also change the time column name
-from "Time" to "Time (min)"
+It makes animated plot faster."
 '''
 new_df = df.copy()
 new_df[pp.timeName] = np.arange(5,new_df.shape[0]*5 + 1, 5)
-new_df.rename(columns={pp.timeName: pp.timeName+' (min)'}, inplace=True)
 
-pp.animated_plot(new_df[(new_df[pp.nonCday] >= 4) & (new_df[pp.nonCday] <= 8)],'tmp_animation.mp4',
-                         columns=[pp.tName,pp.ctName, pp.timeName+' (min)'], nFrames = 900, nInterval = 1000)
+pp.animated_plot(new_df[(new_df[pp.nonCday] >= 4) & (new_df[pp.nonCday] <= 8)],
+                        fileName   = 'tmp_animation.mp4',
+                         columns   = [pp.tName,pp.ctName, pp.timeName], 
+                         nFrames   = 900, 
+                         nInterval = 1000,
+                         measlabel = "Temperature (C)",
+                         tlabel    = "Time Diference (min)",
+                         xlabel    = "Outdoor Temperature",
+                         ylabel    = "Indoor Temperature",
+                         title     = "Comparison Between Outdoor and Indoor Temperature")
+
+pp.animated_plot_static(new_df[(new_df[pp.nonCday] >= 4) & (new_df[pp.nonCday] <= 8)],
+                        fileName   = 'tmp_animation2.mp4',
+                         columns   = [pp.tName,pp.ctName, pp.timeName], 
+                         nFrames   = 900, 
+                         nInterval = 500,
+                         step      = 2,
+                         measlabel = "Temperature (C)",
+                         tlabel    = "Time (min)",
+                         xlabel    = "Outdoor Temperature",
+                         ylabel    = "Indoor Temperature",
+                         title     = "Comparison Between Outdoor and Indoor Temperature")
