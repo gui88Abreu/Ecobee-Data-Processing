@@ -340,7 +340,9 @@ def plot_DayxTcTo(dataframe):
     pl.legend(loc='lower right')
     plt.show()
     
-def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, nfps = 30, nInterval = 500):
+def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, 
+                  nfps = 30, nInterval = 500, step = 10):
+    
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
     import pylab as pl
@@ -355,27 +357,37 @@ def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames 
     fltr = ~np.isnan(y)
     x, y, t = x[fltr], y[fltr], t[fltr]
     
+    if 'min' in columns[2]:
+        t = t - t.min()
+    
     fig = plt.figure(figsize = (24,16))
     ax = fig.add_subplot(1, 1, 1)
     
     ax.set_xlabel(columns[2])
     ax.set_ylabel(columns[0]+' and '+ columns[1])
     
+    k = x[:step]
+    k[0], k[-1] = x.max(), x.min()
+    
+    l = y[:step]
+    l[0], l[-1] = y.max(), y.min()
+    
     line = list()
-    ax1, = ax.plot(t, x, 'darkblue', label = columns[0])
-    ax2, = ax.plot(t, y, 'lime', label = columns[1])
+    ax1, = ax.plot(t[:step], k, 'darkblue', label = columns[0])
+    ax2, = ax.plot(t[:step], l, 'lime', label = columns[1])
     line.append(ax1)
     line.append(ax2)
     pl.legend(loc='lower right')
     
     def init():  # only required for blitting to give a clean slate.
-        line[0].set_data([], [])
-        line[1].set_data([], [])
+        line[0].set_ydata([np.nan]*step)
+        line[1].set_ydata([np.nan]*step)
         return line
     
     def animate(i):
-        line[0].set_data(t[:i], x[:i])
-        line[1].set_data(t[:i], y[:i])
+        if len(x[i: i+ step]) == step:
+            line[0].set_ydata(x[i:i + step])
+            line[1].set_ydata(y[i:i + step])
         return line
         
     ani = animation.FuncAnimation(
