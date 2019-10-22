@@ -338,10 +338,11 @@ def plot_DayxTcTo(dataframe):
     ax.plot(t, x, 'darkblue', linestyle='--', label = 'Outside Temperature', marker='o')
     ax.plot(t, y, 'lime', linestyle='--', label = 'Inside Temperature' , marker='o')
     pl.legend(loc='lower right')
-    plt.show()
+    plt.show()  
     
 def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, 
-                  nfps = 30, nInterval = 500, step = 10):
+                 nfps = 30, nInterval = 500, step = 10, legend = "", ylabel = "", 
+                 xlabel= "", tlabel = "", measlabel = "", title = ""):
     
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
@@ -357,14 +358,14 @@ def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames 
     fltr = ~np.isnan(y)
     x, y, t = x[fltr], y[fltr], t[fltr]
     
-    if 'min' in columns[2]:
+    if 'Time' in columns[2]:
         t = t - t.min()
     
     fig = plt.figure(figsize = (24,16))
     ax = fig.add_subplot(1, 1, 1)
     
-    ax.set_xlabel(columns[2])
-    ax.set_ylabel(columns[0]+' and '+ columns[1])
+    ax.set_xlabel(tlabel)
+    ax.set_ylabel(measlabel)
     
     k = x[:step]
     k[0], k[-1] = x.max(), x.min()
@@ -373,11 +374,12 @@ def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames 
     l[0], l[-1] = y.max(), y.min()
     
     line = list()
-    ax1, = ax.plot(t[:step], k, 'darkblue', label = columns[0])
-    ax2, = ax.plot(t[:step], l, 'lime', label = columns[1])
+    ax1, = ax.plot(t[:step], k, 'darkblue', label = xlabel)
+    ax2, = ax.plot(t[:step], l, 'lime', label = ylabel)
     line.append(ax1)
     line.append(ax2)
     pl.legend(loc='lower right')
+    pl.title(title)
     
     def init():  # only required for blitting to give a clean slate.
         line[0].set_ydata([np.nan]*step)
@@ -396,3 +398,51 @@ def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames 
     ani.save(fileName, fps=nfps, extra_args=['-vcodec', 'libx264'])
     
     plt.show()
+    
+def animated_plot_static(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, 
+                         nfps = 30, nInterval = 500, step = 10, legend = "", ylabel = "", 
+                         xlabel= "", tlabel = "", measlabel = "", title = ""):
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+    import pylab as pl
+    import numpy as np
+
+    # get values
+    x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
+
+    # remove nan from x and y
+    fltr = ~np.isnan(x)
+    x, y, t = x[fltr], y[fltr], t[fltr]
+    fltr = ~np.isnan(y)
+    x, y, t = x[fltr], y[fltr], t[fltr]
+
+    fig = plt.figure(figsize = (24,16))
+    ax = fig.add_subplot(1, 1, 1)
+
+    ax.set_xlabel(tlabel)
+    ax.set_ylabel(measlabel)
+
+    line = list()
+    ax1, = ax.plot(t, x, 'darkblue', label = xlabel)
+    ax2, = ax.plot(t, y, 'lime', label = ylabel)
+    line.append(ax1)
+    line.append(ax2)
+    pl.legend(loc='lower right')
+    pl.title(title)
+
+    def init():  # only required for blitting to give a clean slate.
+        line[0].set_data([], [])
+        line[1].set_data([], [])
+        return line
+
+    def animate(i):
+        line[0].set_data(t[:i*step], x[:i*step])
+        line[1].set_data(t[:i*step], y[:i*step])
+        return line
+
+    ani = animation.FuncAnimation(
+        fig, animate, init_func=init, interval=nInterval, blit=True, save_count=50, frames=nFrames)
+
+    ani.save(fileName, fps=nfps, extra_args=['-vcodec', 'libx264'])
+
+    plt.show() 
