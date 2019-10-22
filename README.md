@@ -4,4 +4,4 @@
 
 This repository contains the codes developed on the scientific initiation project “Pilot Sensor Network System Implementation for Surveillance and Remote Monitoring of Health Parameters”.
 
-![](plot_TObyTI.gif)
+![](figuresplot_TObyTI.gif)
