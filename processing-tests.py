@@ -49,5 +49,5 @@ new_df = df.copy()
 new_df[pp.timeName] = np.arange(5,new_df.shape[0]*5 + 1, 5)
 new_df.rename(columns={pp.timeName: pp.timeName+' (min)'}, inplace=True)
 
-pp.animated_plot(new_df[(new_df[pp.nonCday] >= 1) & (new_df[pp.nonCday] <= 5)],'tmp_animation.mp4',
-                         columns=[pp.tName,pp.ctName, pp.timeName+' (min)'], nFrames = 900)
+pp.animated_plot(new_df[(new_df[pp.nonCday] >= 4) & (new_df[pp.nonCday] <= 8)],'tmp_animation.mp4',
+                         columns=[pp.tName,pp.ctName, pp.timeName+' (min)'], nFrames = 900, nInterval = 1000)
