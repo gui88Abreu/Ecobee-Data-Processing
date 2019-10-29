@@ -12,35 +12,37 @@ yearName  = 'Year'
 monthName = 'Month'
 nonCday   = 'Days in Order'
 
-dateName  = 'Date'
+dateName  = 'DateTime'
 tonName   = 'Time on (min)'
-sysMName  = 'System Mode'
+sysMName  = 'HvacMode'
 timeName  = 'Time'
 
-hName     = 'Current Humidity (%RH)'
-ctName    = 'Current Temp (C)'
-tName     = 'Outdoor Temp (C)'
-wsName    = 'Wind Speed (km/h)'
+hName     = 'Humidity'
+hout      = 'RH_out'
+ctName    = 'Thermostat_Temperature'
+tName     = 'T_out'
 
-hmaxName  = 'Max Inside Humidity (%RH)'
-ctmaxNam  = 'Max Inside Temp (C)'
-tmaxName  = 'Max Outside Temp (C)'
-wsmaxNam  = 'Max Wind Speed (km/h)'
+hmaxName  = 'Max Indoor Humidity (%RH)'
+ctmaxNam  = 'Max Indoor Temp (C)'
+tmaxName  = 'Max Outdoor Temp (C)'
+houtMax   = 'Max Outdoor Humidity (%RH)'
 
-hminName  = 'Min inside Humidity (%RH)'
-ctminNam  = 'Min Inside Temp (C)'
-tminName  = 'Min Outside Temp (C)'
-wsminNam  = 'Min Wind Speed (km/h)'
+hminName  = 'Min Indoor Humidity (%RH)'
+ctminNam  = 'Min Indoor Temp (C)'
+tminName  = 'Min Outdoor Temp (C)'
+houtMin   = 'Min Outdoor Humidity (%RH)'
 
-hmeanName = 'Mean Inside Hum (%RH)'
-ctmnName  = 'Mean Inside Temp (C)'
-tmeanName = 'Mean Outside Temp (C)'
-wsmnNam   = 'Mean Wind Speed (km/h)'
+hmeanName = 'Mean Indoor Hum (%RH)'
+ctmnName  = 'Mean Indoor Temp (C)'
+tmeanName = 'Mean Outdoor Temp (C)'
+houtMean  = 'Mean Outdoor Hum (%RH)'
 
-stdTemp   = 'Outside Temp Standard Deviation (C)'
-stdHum    = 'Inside Humidity Standard Deviation (%RH)'
-stdCT     = 'Inside Temp Standard Deviation (C)'
-stdWS     = 'Wind Speed Standard Deviation (km/h)'
+stdTemp   = 'Outdoor Temp Standard Deviation (C)'
+stdHum    = 'Indoor Humidity Standard Deviation (%RH)'
+stdCT     = 'Indoor Temp Standard Deviation (C)'
+stdHout   = 'Outdoor Humidity Standard Deviation (%RH)'
+
+eventName = 'Event'
 
 def ecobeeDataFrame(path):
     '''
@@ -74,14 +76,18 @@ def ecobeeDataFrame(path):
     
     # find the date of each row
     columns = data[0].split(',')
-    data = [line.split(',')[:-1] for line in data[1:]]
+    data = [line.split(',') for line in data[1:]]
     df = pd.DataFrame(data, columns=columns)
-    date = np.asarray([d.split('-') for d in df[dateName]], dtype='uint16')
     
-    df[tName]  = pd.to_numeric(df[tName])
-    df[hName]  = pd.to_numeric(df[hName])
-    df[ctName] = pd.to_numeric(df[ctName])
-    df[wsName] = pd.to_numeric(df[wsName])
+    df.rename(columns={'RH_out\n':'RH_out'}, inplace=True)
+    
+    #split datetime into date and time columns
+    datetime = np.asarray([d.split(' ') for d in df[dateName]], dtype='str')
+    df[dateName] = datetime[:,0]
+    df[timeName] = datetime[:,1]
+    
+    # get year month and day from Date
+    date = np.asarray([d.split('-') for d in df[dateName]], dtype='uint16')
     
     # create new coluns
     df[yearName]  = date[:,0]
@@ -89,6 +95,13 @@ def ecobeeDataFrame(path):
     df[dayName]   = date[:,2]
     df[nonCday] = 0
     
+    # cast these columns from str to numeric
+    df[tName]  = pd.to_numeric(df[tName], errors='coerce')
+    df[hName]  = pd.to_numeric(df[hName], errors='coerce')
+    df[ctName] = pd.to_numeric(df[ctName], errors='coerce')
+    df[hout]   = pd.to_numeric(df[hout], errors='coerce')
+    
+    # get Julian Day
     for date in df[dateName].unique():
         d = dt.datetime.strptime(date, "%Y-%m-%d") # get datetime object
         df.loc[ (df[yearName] == d.year) & (df[monthName] == d.month) & (df[dayName] == d.day), nonCday] = dt.date(d.year,d.month,d.day).toordinal()
@@ -179,16 +192,16 @@ def getTimeOn(dataframe):
     for day in df[nonCday].unique():
         d = df[df[nonCday] == day]
         modes = d[sysMName].values
-        clock = d['Time'].values
+        clock = d[timeName].values
         clock = [x.split(':') for x in clock]
         
         count = 0
         i = 0
         while i < len(modes):
-            if modes[i].endswith("On"):
+            if modes[i]!= "off":
                 b = int(clock[i][0])*60 + int(clock[i][1])
                 i+=1
-                while i < len(modes) and modes[i].endswith("On"):
+                while i < len(modes) and modes[i]!= "off":
                     i+=1
                 if i < len(modes):
                     a = int(clock[i][0])*60 + int(clock[i][1])
@@ -218,7 +231,7 @@ def cleanData(dataframe):
     
     df = dataframe.copy()
     
-    columns= [tName, hName, ctName, wsName]
+    columns= [tName, ctName, hName, hout]
     
     meanv = list()
     mxmnv = list()
@@ -236,14 +249,14 @@ def cleanData(dataframe):
     
     
     cln_columns = [nonCday, 
-                  tmeanName, stdTemp, 
-                  hmeanName, stdHum, 
+                  tmeanName, stdTemp,
                   ctmnName, stdCT,
-                  wsmnNam, stdWS,
-                  tmaxName, tminName, 
-                  hmaxName, hminName, 
+                  hmeanName, stdHum,
+                  houtMean, stdHout,
+                  tmaxName, tminName,
                   ctmaxNam, ctminNam,
-                  wsmaxNam, wsminNam,
+                  hmaxName, hminName,
+                  houtMax, houtMin,
                   tonName]
     
     clean_df = pd.DataFrame(values, columns = cln_columns)

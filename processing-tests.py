@@ -10,8 +10,11 @@ Created on Wed Sep 18 14:57:37 2019
 import ecobee.preprocessing as pp
 import numpy as np
 
-path = '../data_set/ecobee/House1/'
+path = '/home/guilherme/Documents/GIT REPOSITORIES/data_set/ecobee/003ad187b773affeb756ebcdb56f14594b814509.csv'
 
+df = pp.ecobeeDataFrame(path)
+
+'''
 # generate a data frame from the ecobee csv file
 print('Generating Data Frame...')
 for i in range(1,11):
@@ -21,9 +24,9 @@ for i in range(1,11):
             df = pp.ecobeeDataFrame(path+str(i)+'.csv')
         else:
             df = pp.appendNewData(df,path+str(i)+'.csv')
-    except:
-        quit('Something went wrong with this file: '+str(i)+'.csv')
-
+    except FileNotFoundError:
+        quit('Something went wrong with this file! No such file or directory: '+path+str(i)+'.csv')
+'''
 # shift all days untill the first day be 1
 df[pp.nonCday] -= df[pp.nonCday].min() - 1
 print('Done!')
