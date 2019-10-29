@@ -3,54 +3,62 @@
 """
 Created on Thu Sep 26 18:45:31 2019
 
-@author: guilherme
+@author: Guilherme de Brito Abreu, undergraduate student at @unicamp.
 """
 
 # macro names
-dayName   = 'Day'
-yearName  = 'Year'
-monthName = 'Month'
-nonCday   = 'Days in Order'
+dayCol   = 'Day'
+yearCol  = 'Year'
+monthCol = 'Month'
+dateCol  = 'DateTime'
+timeCol  = 'Time'
 
-dateName  = 'DateTime'
-tonName   = 'Time on (min)'
-sysMName  = 'HvacMode'
-timeName  = 'Time'
+julianDayCol    = 'Days in Order'
+timeDeviceOnCol = 'Time on (min)'
+systemModeCol   = 'HvacMode'
 
-hName     = 'Humidity'
-hout      = 'RH_out'
-ctName    = 'Thermostat_Temperature'
-tName     = 'T_out'
 
-hmaxName  = 'Max Indoor Humidity (%RH)'
-ctmaxNam  = 'Max Indoor Temp (C)'
-tmaxName  = 'Max Outdoor Temp (C)'
-houtMax   = 'Max Outdoor Humidity (%RH)'
+outHumCol = 'RH_out'
+inTemCol  = 'Thermostat_Temperature'
+inHumCol  = 'Humidity'
+outTemCol = 'T_out'
 
-hminName  = 'Min Indoor Humidity (%RH)'
-ctminNam  = 'Min Indoor Temp (C)'
-tminName  = 'Min Outdoor Temp (C)'
-houtMin   = 'Min Outdoor Humidity (%RH)'
+maxInHumCol  = 'Max Indoor Humidity (%RH)'
+maxInTemCol  = 'Max Indoor Temp (C)'
+maxOutTemCol = 'Max Outdoor Temp (C)'
+outHumColMax = 'Max Outdoor Humidity (%RH)'
 
-hmeanName = 'Mean Indoor Hum (%RH)'
-ctmnName  = 'Mean Indoor Temp (C)'
-tmeanName = 'Mean Outdoor Temp (C)'
-houtMean  = 'Mean Outdoor Hum (%RH)'
+minInHumCol  = 'Min Indoor Humidity (%RH)'
+minInTemCol  = 'Min Indoor Temp (C)'
+minOutTemCol = 'Min Outdoor Temp (C)'
+minOutHumCol = 'Min Outdoor Humidity (%RH)'
 
-stdTemp   = 'Outdoor Temp Standard Deviation (C)'
-stdHum    = 'Indoor Humidity Standard Deviation (%RH)'
-stdCT     = 'Indoor Temp Standard Deviation (C)'
-stdHout   = 'Outdoor Humidity Standard Deviation (%RH)'
+meanInHumCol  = 'Mean Indoor Hum (%RH)'
+meanInTemCol  = 'Mean Indoor Temp (C)'
+meanOutTemCol = 'Mean Outdoor Temp (C)'
+meanOutHumCol = 'Mean Outdoor Hum (%RH)'
 
-eventName = 'Event'
+stdOutTemCol = 'Outdoor Temp Standard Deviation (C)'
+stdInHumCol  = 'Indoor Humidity Standard Deviation (%RH)'
+stdInTemCol  = 'Indoor Temp Standard Deviation (C)'
+stdoutHumCol = 'Outdoor Humidity Standard Deviation (%RH)'
+
+eventCol = 'Event'
 
 def ecobeeDataFrame(path):
     '''
     Description: It creates a data frame from a ecobee report csv table and includes new columns as the following:
-        dayName             = 'Day'
-        yearName            = 'Year'
-        monthName           = 'Month'
-        nonChronologicalDay = 'Days in Order'    
+        dayCol       = 'Day'
+        yearCol      = 'Year'
+        monthCol     = 'Month'
+        JulianDayCol = 'Days in Order'
+        timeCol      = 'Time'
+        
+        It also converts temperature from fahrenheit to celsius, cast temperatures and humidities from string to numeric, 
+        and calculates 'julian day' for each day.
+        
+        Obs: This function doesn't solve problems like incorrect csv format. If there is any problem like this It is need
+        to treat it before this function call.
     Input:
         path: The path of the report file.
         
@@ -61,50 +69,61 @@ def ecobeeDataFrame(path):
     import numpy as np
     import datetime as dt
     
-    # just open file and read the data
-    file = open(path, 'r')
-    data = file.readlines()
-    file.close()
-    
-    # clean up the data removing empty rows and commentaries
-    i = 0;
-    while i < len(data):
-        if '#' in data[i] or '\n' == data[i] or '' == data[i]:
-            data.pop(i)
-        else:
-            i+=1
-    
-    # find the date of each row
-    columns = data[0].split(',')
-    data = [line.split(',') for line in data[1:]]
-    df = pd.DataFrame(data, columns=columns)
-    
+    try:
+        df = pd.read_csv(path)
+    except pd.errors.ParserError:
+        # just open file and read the data
+        file = open(path, 'r')
+        data = file.readlines()
+        file.close()
+        
+        # clean up the data removing empty rows and commentaries
+        i = 0;
+        while i < len(data):
+            if '#' in data[i] or '\n' == data[i] or '' == data[i]:
+                data.pop(i)
+            else:
+                i+=1
+        
+        # find the date of each row
+        columns = data[0].split(',')
+        try:
+            df = pd.DataFrame([line.split(',') for line in data[1:]], columns=columns)
+        except ValueError as e:
+            import sys
+            print(e)
+            sys.exit()
+        
     df.rename(columns={'RH_out\n':'RH_out'}, inplace=True)
     
     #split datetime into date and time columns
-    datetime = np.asarray([d.split(' ') for d in df[dateName]], dtype='str')
-    df[dateName] = datetime[:,0]
-    df[timeName] = datetime[:,1]
+    datetime = np.asarray([d.split(' ') for d in df[dateCol]], dtype='str')
+    df[dateCol] = datetime[:,0]
+    df[timeCol] = datetime[:,1]
     
     # get year month and day from Date
-    date = np.asarray([d.split('-') for d in df[dateName]], dtype='uint16')
+    date = np.asarray([d.split('-') for d in df[dateCol]], dtype='uint16')
     
     # create new coluns
-    df[yearName]  = date[:,0]
-    df[monthName] = date[:,1]
-    df[dayName]   = date[:,2]
-    df[nonCday] = 0
+    df[yearCol]  = date[:,0]
+    df[monthCol] = date[:,1]
+    df[dayCol]   = date[:,2]
+    df[julianDayCol] = 0
     
     # cast these columns from str to numeric
-    df[tName]  = pd.to_numeric(df[tName], errors='coerce')
-    df[hName]  = pd.to_numeric(df[hName], errors='coerce')
-    df[ctName] = pd.to_numeric(df[ctName], errors='coerce')
-    df[hout]   = pd.to_numeric(df[hout], errors='coerce')
+    df[outTemCol]  = pd.to_numeric(df[outTemCol], errors='coerce')
+    df[inHumCol]  = pd.to_numeric(df[inHumCol], errors='coerce')
+    df[inTemCol] = pd.to_numeric(df[inTemCol], errors='coerce')
+    df[outHumCol]   = pd.to_numeric(df[outHumCol], errors='coerce')
+    
+    # convert temperature from fahrenheit to celsius
+    df[outTemCol]  = (df[outTemCol]  - 32) * (5/9)
+    df[inTemCol] = (df[inTemCol] - 32) * (5/9)
     
     # get Julian Day
-    for date in df[dateName].unique():
+    for date in df[dateCol].unique():
         d = dt.datetime.strptime(date, "%Y-%m-%d") # get datetime object
-        df.loc[ (df[yearName] == d.year) & (df[monthName] == d.month) & (df[dayName] == d.day), nonCday] = dt.date(d.year,d.month,d.day).toordinal()
+        df.loc[ (df[yearCol] == d.year) & (df[monthCol] == d.month) & (df[dayCol] == d.day), julianDayCol] = dt.date(d.year,d.month,d.day).toordinal()
     
     return df
 
@@ -143,9 +162,9 @@ def getMxMn(dataframe, column):
     df = dataframe.copy()
     
     mxmn_list = list()
-    for day in df[nonCday].unique():
-        d = df[df[nonCday] == day] 
-        mxmn_list.append([np.max(d[column]), np.min(d[column])])
+    for day in df[julianDayCol].unique():
+        d = df[df[julianDayCol] == day] 
+        mxmn_list.append([round(np.max(d[column]),2), round(np.min(d[column]),2)])
     return mxmn_list
 
 def getMean(dataframe, column):
@@ -169,8 +188,8 @@ def getMean(dataframe, column):
     df = dataframe.copy()
     
     mean_list = list()
-    for day in df[nonCday].unique():
-        d = df[df[nonCday] == day]
+    for day in df[julianDayCol].unique():
+        d = df[df[julianDayCol] == day]
         mean_list.append([round(np.mean(d[column]), 2), round(np.std(d[column]), 2)])
     return mean_list
 
@@ -189,10 +208,10 @@ def getTimeOn(dataframe):
     df = dataframe.copy()
     
     count_list = list()
-    for day in df[nonCday].unique():
-        d = df[df[nonCday] == day]
-        modes = d[sysMName].values
-        clock = d[timeName].values
+    for day in df[julianDayCol].unique():
+        d = df[df[julianDayCol] == day]
+        modes = d[systemModeCol].values
+        clock = d[timeCol].values
         clock = [x.split(':') for x in clock]
         
         count = 0
@@ -214,7 +233,7 @@ def getTimeOn(dataframe):
         count_list.append(count)
     return count_list
 
-def cleanData(dataframe):
+def summarizeData(dataframe):
     '''
     Description:
         It receives a ecobee data frame as input and compute some data as mean, 
@@ -231,7 +250,7 @@ def cleanData(dataframe):
     
     df = dataframe.copy()
     
-    columns= [tName, ctName, hName, hout]
+    columns= [outTemCol, inTemCol, inHumCol, outHumCol]
     
     meanv = list()
     mxmnv = list()
@@ -240,7 +259,7 @@ def cleanData(dataframe):
         mxmnv.append(np.asarray(getMxMn(df, c)))
     
     tmOn = np.asarray([getTimeOn(df)])
-    days = np.asarray([df[nonCday].unique()])
+    days = np.asarray([df[julianDayCol].unique()])
     
     meanv = np.concatenate((meanv[:]), axis=1)
     mxmnv = np.concatenate((mxmnv[:]), axis=1)
@@ -248,16 +267,16 @@ def cleanData(dataframe):
     values = np.concatenate((days.T,meanv,mxmnv,tmOn.T), axis=1)
     
     
-    cln_columns = [nonCday, 
-                  tmeanName, stdTemp,
-                  ctmnName, stdCT,
-                  hmeanName, stdHum,
-                  houtMean, stdHout,
-                  tmaxName, tminName,
-                  ctmaxNam, ctminNam,
-                  hmaxName, hminName,
-                  houtMax, houtMin,
-                  tonName]
+    cln_columns = [julianDayCol, 
+                  meanOutTemCol, stdOutTemCol,
+                  meanInTemCol, stdInTemCol,
+                  meanInHumCol, stdInHumCol,
+                  meanOutHumCol, stdoutHumCol,
+                  maxOutTemCol, minOutTemCol,
+                  maxInTemCol, minInTemCol,
+                  maxInHumCol, minInHumCol,
+                  outHumColMax, minOutHumCol,
+                  timeDeviceOnCol]
     
     clean_df = pd.DataFrame(values, columns = cln_columns)
     
@@ -277,15 +296,15 @@ def plot_TxD(dataframe):
     cln_df = dataframe.copy()
     
     # get boundaries and bands
-    min_t = cln_df[tmeanName].min()
-    max_t = cln_df[tmeanName].max()
+    min_t = cln_df[meanOutTemCol].min()
+    max_t = cln_df[meanOutTemCol].max()
     temp = np.arange(min_t+5,max_t+5,5)
     mean = []
     std = []
     
     # get mean time on and the respectives standard deviations
     for t in temp:
-        f = cln_df.loc[(cln_df[tmeanName] < t) & (cln_df[tmeanName] > t - 5), tonName]
+        f = cln_df.loc[(cln_df[meanOutTemCol] < t) & (cln_df[meanOutTemCol] > t - 5), timeDeviceOnCol]
         mean.append(f.sum()/f.size)
         std.append(np.std(f))
             
@@ -312,7 +331,13 @@ def plot_TxD(dataframe):
     plt.errorbar(x, y, yerr = e, ecolor = 'r', linestyle='None', marker='d')
     plt.show()
     
-def plot_DayxTcTo(dataframe):
+def plot_comparison(dataframe, 
+                  tlabel  = 'Day',
+                  ylabel  = 'Temperature (C)',
+                  y1label = 'Outdoor', 
+                  y2label = 'Indoor', 
+                  title   = "Outdoor x Indoor", 
+                  columns = [meanOutTemCol, meanInTemCol, julianDayCol]):
     '''
     Description:
         It receives a clean dataframe object and plot Inside temperature 
@@ -325,35 +350,39 @@ def plot_DayxTcTo(dataframe):
     import numpy as np
     
     # get values
-    x, y, t = dataframe[tmeanName].values, dataframe[ctmnName].values, dataframe[nonCday].values
+    y1, y2, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
     
     # remove nan from x and y
-    fltr = ~np.isnan(x)
-    x, y, t = x[fltr], y[fltr], t[fltr]
-    fltr = ~np.isnan(y)
-    x, y, t = x[fltr], y[fltr], t[fltr]
+    fltr = ~np.isnan(y1)
+    y1, y2, t = y1[fltr], y2[fltr], t[fltr]
+    fltr = ~np.isnan(y2)
+    y1, y2, t = y1[fltr], y2[fltr], t[fltr]
     
     fig = plt.figure(figsize = (16,12))
     ax = fig.add_subplot(1, 1, 1)
     
-    ax.set_xlabel('day')
-    ax.set_ylabel('Temperature (C)')
+    ax.set_xlabel(tlabel)
+    ax.set_ylabel(ylabel)
+    
+    min_y = min([y1.min(), y2.min()])
+    max_y = max([y1.max(), y2.max()])
     
     # Major ticks every 20, minor ticks every 1
-    major_ticks = np.arange(-20, 40, 1)
-    minor_ticks = np.arange(0, t[-1]+5, 5)
+    major_ticks = np.arange(min_y-5, max_y+5, 1)
+    minor_ticks = np.arange(t[0]-1, t[-1]+5, 5)
     
     ax.set_xticks(minor_ticks, minor=True)
     ax.set_yticks(major_ticks, minor=True)
     
     ax.grid(which='both')
     
-    ax.plot(t, x, 'darkblue', linestyle='--', label = 'Outside Temperature', marker='o')
-    ax.plot(t, y, 'lime', linestyle='--', label = 'Inside Temperature' , marker='o')
+    ax.plot(t, y1, 'darkblue', linestyle='--', label = y1label, marker='o')
+    ax.plot(t, y2, 'lime', linestyle='--', label = y2label , marker='o')
     pl.legend(loc='lower right')
+    pl.title(title)
     plt.show()  
     
-def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, 
+def animated_plot(dataframe, fileName, columns=[outTemCol,inTemCol,timeCol], nFrames = 300, 
                  nfps = 30, nInterval = 500, step = 10, legend = "", ylabel = "", 
                  xlabel= "", tlabel = "", measlabel = "", title = ""):
     
@@ -412,7 +441,7 @@ def animated_plot(dataframe, fileName, columns=[tName,ctName,timeName], nFrames 
     
     plt.show()
     
-def animated_plot_static(dataframe, fileName, columns=[tName,ctName,timeName], nFrames = 300, 
+def animated_plot_static(dataframe, fileName, columns=[outTemCol,inTemCol,timeCol], nFrames = 300, 
                          nfps = 30, nInterval = 500, step = 10, legend = "", ylabel = "", 
                          xlabel= "", tlabel = "", measlabel = "", title = ""):
     import matplotlib.pyplot as plt
