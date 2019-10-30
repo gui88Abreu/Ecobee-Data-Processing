@@ -4,6 +4,9 @@
 Created on Thu Sep 26 18:45:31 2019
 
 @author: Guilherme de Brito Abreu, undergraduate student at @unicamp.
+
+This library contains classes that will be helpful in case you want to preprocess data from Ecobee Donate Your Data 2019 dataset.
+
 """
 
 # macro names
@@ -49,94 +52,16 @@ class ecobeeData:
   
     def __init__(self, path):
         '''
-        Description: It creates a data frame from a ecobee report csv table and includes new columns as the following:
-          dayCol       = 'Day'
-          yearCol      = 'Year'
-          monthCol     = 'Month'
-          JulianDayCol = 'Days in Order'
-          timeCol      = 'Time'
-          
-        It also converts temperature from fahrenheit to celsius, cast temperatures and humidities from string to numeric, 
-        and calculates 'julian day' for each day.
-          
-        Obs: This function doesn't solve problems like incorrect csv format. If there is any problem like this It is need
-        to treat it before this function call.
+        Description: It gets a data frame from the csv passed as argument and stores as an attribute.
         
-        Input:
-          path: The path of the report file.
-          
-        Output:
-          A pandas data frame.
+        Input: the path on the machine to a csv file.
         '''
-      
-        self.df = self.getDataFrame(path)
-        self.maxJulianDay = self.df[julianDayCol].max()
+        self.data = self.getDataFrame(path)
+        self.maxJulianDay = self.data[julianDayCol].max()
         
         # shift all days untill the first day be 1
-        self.df[julianDayCol] -= self.df[julianDayCol].min() - 1
-        
-    def getDataFrame(self, path):
-        import pandas as pd
-        import numpy as np
-        import datetime as dt
-        
-        try:
-            df = pd.read_csv(path)
-        except pd.errors.ParserError:
-            # just open file and read the data
-            file = open(path, 'r')
-            data = file.readlines()
-            file.close()
-          
-            # clean up the data removing empty rows and commentaries
-            i = 0;
-            while i < len(data):
-                if '#' in data[i] or '\n' == data[i] or '' == data[i]:
-                    data.pop(i)
-                else:
-                    i+=1
-          
-            # find the date of each row
-            columns = data[0].split(',')
-            try:
-                df = pd.DataFrame([line.split(',') for line in data[1:]], columns=columns)
-            except ValueError as e:
-                import sys
-                print(e)
-                sys.exit()
-              
-        df.rename(columns={'RH_out\n':'RH_out'}, inplace=True)
-          
-        #split datetime into date and time columns
-        datetime = np.asarray([d.split(' ') for d in df[dateCol]], dtype='str')
-        df[dateCol] = datetime[:,0]
-        df[timeCol] = datetime[:,1]
-          
-        # get year month and day from Date
-        date = np.asarray([d.split('-') for d in df[dateCol]], dtype='uint16')
-          
-        # create new coluns
-        df[yearCol]  = date[:,0]
-        df[monthCol] = date[:,1]
-        df[dayCol]   = date[:,2]
-        df[julianDayCol] = 0
-          
-        # cast these columns from str to numeric
-        df[outTemCol]  = pd.to_numeric(df[outTemCol], errors='coerce')
-        df[inHumCol]  = pd.to_numeric(df[inHumCol], errors='coerce')
-        df[inTemCol] = pd.to_numeric(df[inTemCol], errors='coerce')
-        df[outHumCol]   = pd.to_numeric(df[outHumCol], errors='coerce')
-          
-        # convert temperature from fahrenheit to celsius
-        df[outTemCol]  = (df[outTemCol]  - 32) * (5/9)
-        df[inTemCol] = (df[inTemCol] - 32) * (5/9)
-        
-        # get Julian Day
-        for date in df[dateCol].unique():
-            d = dt.datetime.strptime(date, "%Y-%m-%d") # get datetime object
-            df.loc[ (df[yearCol] == d.year) & (df[monthCol] == d.month) & (df[dayCol] == d.day), julianDayCol] = dt.date(d.year,d.month,d.day).toordinal()
-        return df
-    
+        self.data[julianDayCol] -= self.data[julianDayCol].min() - 1
+
     def appendNewData(self, path):
         '''
         Description:
@@ -148,12 +73,97 @@ class ecobeeData:
             It returns a new data frame with the new ecobee data set appended to dest.
         '''
         
-        new = self.getDataFrame(path)
+        new_data = self.getDataFrame(path)
         
         # shift all days again
-        self.new[julianDayCol] = self.df.max() + (new[julianDayCol].min() - self.df.maxJulianDay)
+        new_min = new_data[julianDayCol].min()
+        new_data[julianDayCol] -= new_min
+        self.new_data[julianDayCol] += self.data.max() + (new_min - self.data.maxJulianDay)
         
-        return self.df.append(new, ignore_index=True, sort=True)
+        self.data = self.data.append(new_data, ignore_index=True, sort=True)
+ 
+    def getDataFrame(self, path):
+        '''
+        Description: It creates a data frame from a ecobee report csv table and includes new columns as the following:
+          dayCol       = 'Day'
+          yearCol      = 'Year'
+          monthCol     = 'Month'
+          JulianDayCol = 'Days in Order'
+          timeCol      = 'Time'
+          
+        It also converts temperature from fahrenheit to celsius, cast temperatures and humidities from string to numeric, 
+        and calculates 'julian day' for each day.
+          
+        Obs: This function doesn't solve problems like incorrect number of columns or rows. If there is any problem like this It is needed
+        to treat it before this function call.
+        
+        Input:
+          path: The path of the report file.
+          
+        Output:
+          A pandas data frame.
+        '''
+        
+        import pandas as pd
+        import numpy as np
+        import datetime as dt
+        
+        try:
+            data = pd.read_csv(path)
+        except pd.errors.ParserError:
+            # just open file and read the data
+            file = open(path, 'r')
+            rawData = file.readlines()
+            file.close()
+          
+            # clean up the data removing empty rows and commentaries
+            i = 0;
+            while i < len(rawData):
+                if '#' in rawData[i] or '\n' == rawData[i] or '' == rawData[i]:
+                    data.pop(i)
+                else:
+                    i+=1
+          
+            # find the date of each row
+            columns = rawData[0].split(',')
+            try:
+                data = pd.DataFrame([line.split(',') for line in rawData[1:]], columns=columns)
+            except ValueError as e:
+                import sys
+                print(e)
+                sys.exit()
+              
+        data.rename(columns={'RH_out\n':'RH_out'}, inplace=True)
+          
+        #split datetime into date and time columns
+        datetime = np.asarray([d.split(' ') for d in data[dateCol]], dtype='str')
+        data[dateCol] = datetime[:,0]
+        data[timeCol] = datetime[:,1]
+          
+        # get year month and day from Date
+        date = np.asarray([d.split('-') for d in data[dateCol]], dtype='uint16')
+          
+        # create new coluns
+        data[yearCol]  = date[:,0]
+        data[monthCol] = date[:,1]
+        data[dayCol]   = date[:,2]
+        data[julianDayCol] = 0
+          
+        # cast these columns from str to numeric
+        data[outTemCol]  = pd.to_numeric(data[outTemCol], errors='coerce')
+        data[inHumCol]  = pd.to_numeric(data[inHumCol], errors='coerce')
+        data[inTemCol] = pd.to_numeric(data[inTemCol], errors='coerce')
+        data[outHumCol]   = pd.to_numeric(data[outHumCol], errors='coerce')
+          
+        # convert temperature from fahrenheit to celsius
+        data[outTemCol]  = (data[outTemCol]  - 32) * (5/9)
+        data[inTemCol] = (data[inTemCol] - 32) * (5/9)
+        
+        # get Julian Day
+        for date in data[dateCol].unique():
+            d = dt.datetime.strptime(date, "%Y-%m-%d") # get datetime object
+            data.loc[ (data[yearCol] == d.year) & (data[monthCol] == d.month) & (data[dayCol] == d.day), julianDayCol] = dt.date(d.year,d.month,d.day).toordinal()
+        return data
     
     def getMxMn(self, column):
         '''
@@ -173,11 +183,11 @@ class ecobeeData:
         '''
         import numpy as np
         
-        df = self.df.copy()
+        data = self.data.copy()
         
         mxmn_list = list()
-        for day in df[julianDayCol].unique():
-            d = df[df[julianDayCol] == day] 
+        for day in data[julianDayCol].unique():
+            d = data[data[julianDayCol] == day] 
             mxmn_list.append([round(np.max(d[column]),2), round(np.min(d[column]),2)])
         return mxmn_list
     
@@ -199,11 +209,11 @@ class ecobeeData:
         '''
         import numpy as np
         
-        df = self.df.copy()
+        data = self.data.copy()
         
         mean_list = list()
-        for day in df[julianDayCol].unique():
-            d = df[df[julianDayCol] == day]
+        for day in data[julianDayCol].unique():
+            d = data[data[julianDayCol] == day]
             mean_list.append([round(np.mean(d[column]), 2), round(np.std(d[column]), 2)])
         return mean_list
     
@@ -219,11 +229,11 @@ class ecobeeData:
             A sorted list with each time that the device was left on mode on for each day.
         '''
         
-        df = self.df.copy()
+        data = self.data.copy()
         
         count_list = list()
-        for day in df[julianDayCol].unique():
-            d = df[df[julianDayCol] == day]
+        for day in data[julianDayCol].unique():
+            d = data[data[julianDayCol] == day]
             modes = d[systemModeCol].values
             clock = d[timeCol].values
             clock = [x.split(':') for x in clock]
@@ -262,7 +272,7 @@ class ecobeeData:
         import pandas as pd
         import numpy as np
         
-        df = self.df.copy()
+        data = self.data.copy()
         
         columns= [outTemCol, inTemCol, inHumCol, outHumCol]
         
@@ -273,7 +283,7 @@ class ecobeeData:
             mxmnv.append(np.asarray(self.getMxMn(c)))
         
         tmOn = np.asarray([self.getTimeOn()])
-        days = np.asarray([df[julianDayCol].unique()])
+        days = np.asarray([data[julianDayCol].unique()])
         
         meanv = np.concatenate((meanv[:]), axis=1)
         mxmnv = np.concatenate((mxmnv[:]), axis=1)
@@ -305,18 +315,18 @@ class ecobeeData:
         import matplotlib.pyplot as plt
         import numpy as np
         
-        cln_df = self.summ.copy()
+        cln_data = self.summ.copy()
         
         # get boundaries and bands
-        min_t = cln_df[meanOutTemCol].min()
-        max_t = cln_df[meanOutTemCol].max()
+        min_t = cln_data[meanOutTemCol].min()
+        max_t = cln_data[meanOutTemCol].max()
         temp = np.arange(min_t+5,max_t+5,5)
         mean = []
         std = []
         
         # get mean time on and the respectives standard deviations
         for t in temp:
-            f = cln_df.loc[(cln_df[meanOutTemCol] < t) & (cln_df[meanOutTemCol] > t - 5), timeDeviceOnCol]
+            f = cln_data.loc[(cln_data[meanOutTemCol] < t) & (cln_data[meanOutTemCol] > t - 5), timeDeviceOnCol]
             mean.append(f.sum()/f.size)
             std.append(np.std(f))
                 
@@ -365,7 +375,7 @@ class ecobeeData:
         if summ:
             dataframe = self.summ
         else: 
-            dataframe = self.df
+            dataframe = self.data
         
         # get values
         y1, y2, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
@@ -423,7 +433,7 @@ class ecobeeData:
         if summ:
             dataframe = self.summ
         else:
-            dataframe = self.df
+            dataframe = self.data
         
         # get values
         x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
@@ -497,7 +507,7 @@ class ecobeeData:
         if summ:
             dataframe = self.summ
         else:
-            dataframe = self.df
+            dataframe = self.data
         
         # get values
         x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
