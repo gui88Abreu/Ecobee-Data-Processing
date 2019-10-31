@@ -50,37 +50,40 @@ eventCol = 'Event'
 
 class ecobeeData:
   
-    def __init__(self, path):
+    def __init__(self):
         '''
-        Description: It gets a data frame from the csv passed as argument and stores as an attribute.
-        
-        Input: the path on the machine to a csv file.
+        Description: It gets an empty data frame stores it as an attribute.
         '''
-        self.data = self.getDataFrame(path)
-        self.maxJulianDay = self.data[julianDayCol].max()
         
-        # shift all days untill the first day be 1
-        self.data[julianDayCol] -= self.data[julianDayCol].min() - 1
+        import pandas as pd
+        self.data = pd.DataFrame([])
+        self.maxJulianDay = 0
+        self.size = 0
 
     def appendNewData(self, path):
         '''
         Description:
-            It receives a ecobee data frame as input append 
-            a new data set to it and return it.
+            It receives a ecobee data frame as input and append 
+            it to self.data.
         Input:
             datframe: An ecobee data frame.
-        Output:
-            It returns a new data frame with the new ecobee data set appended to dest.
         '''
+        try:
+            newData = self.getDataFrame(path)
+        except FileNotFoundError:
+            return
         
-        new_data = self.getDataFrame(path)
+        nextMaxJulianDay = newData[julianDayCol].max()
+        new_min = newData[julianDayCol].min()
         
-        # shift all days again
-        new_min = new_data[julianDayCol].min()
-        new_data[julianDayCol] -= new_min
-        self.new_data[julianDayCol] += self.data.max() + (new_min - self.data.maxJulianDay)
+        # shift all days in order to make the first day be 1
+        newData[julianDayCol] -= new_min - 1 
+        if self.size > 0:
+            newData[julianDayCol] += self.data[julianDayCol].max() + (new_min - self.maxJulianDay) - 1
         
-        self.data = self.data.append(new_data, ignore_index=True, sort=True)
+        self.maxJulianDay = nextMaxJulianDay
+        self.data = self.data.append(newData, ignore_index=True, sort=True)
+        self.size += 1
  
     def getDataFrame(self, path):
         '''
