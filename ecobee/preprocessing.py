@@ -60,7 +60,7 @@ class ecobeeData:
         self.maxJulianDay = 0
         self.size = 0
 
-    def appendNewData(self, path):
+    def append(self, path):
         '''
         Description:
             It receives a ecobee data frame as input and append 
@@ -168,7 +168,7 @@ class ecobeeData:
             data.loc[ (data[yearCol] == d.year) & (data[monthCol] == d.month) & (data[dayCol] == d.day), julianDayCol] = dt.date(d.year,d.month,d.day).toordinal()
         return data
     
-    def getMxMn(self, column):
+    def getMaxMin(self, column):
         '''
         Description:
             It receives a ecobee data frame as input and compute max and min value 
@@ -229,7 +229,7 @@ class ecobeeData:
         Input:
             An ecobee data frame.
         Output:
-            A sorted list with each time that the device was left on mode on for each day.
+            A  list with each time that the device was left on mode on for each day.
         '''
         
         data = self.data.copy()
@@ -283,7 +283,7 @@ class ecobeeData:
         mxmnv = list()
         for c in columns:
             meanv.append(np.asarray(self.getMean(c)))
-            mxmnv.append(np.asarray(self.getMxMn(c)))
+            mxmnv.append(np.asarray(self.getMaxMin(c)))
         
         tmOn = np.asarray([self.getTimeOn()])
         days = np.asarray([data[julianDayCol].unique()])
@@ -307,7 +307,7 @@ class ecobeeData:
         
         self.summ = pd.DataFrame(values, columns = cln_columns)
     
-    def plot_TxD(self):
+    def plotTxD(self):
         '''
         Description:
             It receives a clean dataframe object and plot the relation between the temperature bands
@@ -318,18 +318,18 @@ class ecobeeData:
         import matplotlib.pyplot as plt
         import numpy as np
         
-        cln_data = self.summ.copy()
+        data = self.summ.copy()
         
         # get boundaries and bands
-        min_t = cln_data[meanOutTemCol].min()
-        max_t = cln_data[meanOutTemCol].max()
+        min_t = data[meanOutTemCol].min()
+        max_t = data[meanOutTemCol].max()
         temp = np.arange(min_t+5,max_t+5,5)
         mean = []
         std = []
         
         # get mean time on and the respectives standard deviations
         for t in temp:
-            f = cln_data.loc[(cln_data[meanOutTemCol] < t) & (cln_data[meanOutTemCol] > t - 5), timeDeviceOnCol]
+            f = data.loc[(data[meanOutTemCol] < t) & (data[meanOutTemCol] > t - 5), timeDeviceOnCol]
             mean.append(f.sum()/f.size)
             std.append(np.std(f))
                 
@@ -356,7 +356,7 @@ class ecobeeData:
         plt.errorbar(x, y, yerr = e, ecolor = 'r', linestyle='None', marker='d')
         plt.show()
         
-    def plot_comparison(self, 
+    def plotComparison(self, 
                         summ = False,
                         tlabel  = 'Day',
                         ylabel  = 'Temperature (C)',
@@ -413,30 +413,33 @@ class ecobeeData:
         pl.title(title)
         plt.show()  
         
-    def animated_plot(self,
-                      fileName, 
-                      summ = False,
-                      columns=[outTemCol,inTemCol,timeCol], 
-                      nFrames = 300, 
-                      nfps = 30, 
-                      nInterval = 500, 
-                      step = 10, 
-                      legend = "", 
-                      ylabel = "", 
-                      xlabel= "", 
-                      tlabel = "", 
-                      measlabel = "", 
-                      title = ""):
+    def animatedPlot(self,
+                    fileName,
+                    dataframe = None,
+                    summ = False,
+                    columns=[outTemCol,inTemCol,timeCol], 
+                    nFrames = 300, 
+                    nfps = 30, 
+                    nInterval = 500, 
+                    step = 10, 
+                    legend = "", 
+                    ylabel = "", 
+                    xlabel= "", 
+                    tlabel = "", 
+                    measlabel = "", 
+                    title = ""):
         
         import matplotlib.pyplot as plt
         import matplotlib.animation as animation
         import pylab as pl
         import numpy as np
+        import pandas as pd
         
-        if summ:
-            dataframe = self.summ
-        else:
-            dataframe = self.data
+        if type(dataframe) != pd.core.frame.DataFrame:
+            if summ:
+                dataframe = self.summ
+            else:
+                dataframe = self.data
         
         # get values
         x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
@@ -476,7 +479,7 @@ class ecobeeData:
             return line
         
         def animate(i):
-            if len(x[i: i+ step]) == step:
+            if len(x[i: i+step]) == step:
                 line[0].set_ydata(x[i:i + step])
                 line[1].set_ydata(y[i:i + step])
             return line
@@ -488,29 +491,32 @@ class ecobeeData:
         
         plt.show()
         
-    def animated_plot_static(self,  
-                             fileName,
-                             summ = False,
-                             columns=[outTemCol,inTemCol,timeCol], 
-                             nFrames = 300, 
-                             nfps = 30, 
-                             nInterval = 500, 
-                             step = 10, 
-                             legend = "", 
-                             ylabel = "", 
-                             xlabel= "", 
-                             tlabel = "", 
-                             measlabel = "", 
-                             title = ""):
+    def animatedPlotStatic(self,
+                        fileName,
+                        dataframe = None,
+                        summ = False,
+                        columns=[outTemCol,inTemCol,timeCol], 
+                        nFrames = 300, 
+                        nfps = 30, 
+                        nInterval = 500, 
+                        step = 10, 
+                        legend = "", 
+                        ylabel = "", 
+                        xlabel= "", 
+                        tlabel = "", 
+                        measlabel = "", 
+                        title = ""):
         import matplotlib.pyplot as plt
         import matplotlib.animation as animation
         import pylab as pl
         import numpy as np
+        import pandas as pd
         
-        if summ:
-            dataframe = self.summ
-        else:
-            dataframe = self.data
+        if type(dataframe) != pd.core.frame.DataFrame:
+            if summ:
+                dataframe = self.summ
+            else:
+                dataframe = self.data
         
         # get values
         x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
@@ -520,7 +526,10 @@ class ecobeeData:
         x, y, t = x[fltr], y[fltr], t[fltr]
         fltr = ~np.isnan(y)
         x, y, t = x[fltr], y[fltr], t[fltr]
-    
+        
+        if 'Time' in columns[2]:
+            t = t - t.min()
+        
         fig = plt.figure(figsize = (24,16))
         ax = fig.add_subplot(1, 1, 1)
     
