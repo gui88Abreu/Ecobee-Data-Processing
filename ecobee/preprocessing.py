@@ -52,7 +52,7 @@ class ecobeeData:
   
     def __init__(self):
         '''
-        Description: It gets an empty data frame stores it as an attribute.
+        Description: Initialize object with an empty dataframe.
         '''
         
         import pandas as pd
@@ -63,10 +63,10 @@ class ecobeeData:
     def append(self, path):
         '''
         Description:
-            It receives a ecobee data frame as input and append 
-            it to self.data.
+            It receives a file path of an ecobee data as input, gets its dataframe and
+            append it to self.data.
         Input:
-            datframe: An ecobee data frame.
+            datframe: An ecobee data file path.
         '''
         try:
             newData = self.getDataFrame(path)
@@ -97,11 +97,11 @@ class ecobeeData:
         It also converts temperature from fahrenheit to celsius, cast temperatures and humidities from string to numeric, 
         and calculates 'julian day' for each day.
           
-        Obs: This function doesn't solve problems like incorrect number of columns or rows. If there is any problem like this It is needed
-        to treat it before this function call.
+        Obs: This function doesn't solve problems like incorrect number of columns or rows. If there is any problem like these, it is needed
+        to treat them before this function call.
         
         Input:
-          path: The path of the report file.
+          path: The report file path.
           
         Output:
           A pandas data frame.
@@ -171,15 +171,12 @@ class ecobeeData:
     def getMaxMin(self, column):
         '''
         Description:
-            It receives a ecobee data frame as input and compute max and min value 
-            of the specified column passed for each day. It returns a list with the 
-            values for each day.
+            It computes max and min value of the specified column passed for each day. 
+            It returns a list with the values for each day.
         Input:
-            datframe: An ecobee data frame.
-            
             column: The name of the column of interest.
         Output:
-            A sorted list with list containing max and min value for each day. 
+            A list with lists containing max and min value for each day. 
             As the following example:
                 
             returning list := [[max1,min1], [max2,min2], ...,[maxN,minN]]
@@ -197,17 +194,14 @@ class ecobeeData:
     def getMean(self, column):
         '''
         Description:
-            It receives a ecobee data frame as input and compute mean and standard 
-            deviation of the specified column passed for each day. It returns a list 
-            with the values for each day.
+            It computes mean and standard deviation of the values from the specified column passed for each day. 
+            It returns a list with the values calculated.
         Input:
-            datframe: An ecobee data frame.
-            
             column: The name of the column of interest.
         Output:
-            A sorted list with list containing mean and stddev for each day. 
+            A list with lists containing mean and stddev for each day. 
             As the following example:
-                
+
             returning list := [[mean1,stddev1], [mean2,stddev2], ...,[meanN,stddevN]]
         '''
         import numpy as np
@@ -223,13 +217,11 @@ class ecobeeData:
     def getTimeOn(self):
         '''
         Description:
-            It receives a ecobee data frame as input and compute how much time the device 
-            that controls temperature was left on. It returns a list with the values for 
-            each day.
-        Input:
-            An ecobee data frame.
+            It computes how much time the device that controls temperature was left on mode on. 
+            It returns a list with the values for each day in order.
+
         Output:
-            A  list with each time that the device was left on mode on for each day.
+            A list with each time that the device was left on mode on for each day.
         '''
         
         data = self.data.copy()
@@ -263,14 +255,12 @@ class ecobeeData:
     def summarizeData(self):
         '''
         Description:
-            It receives a ecobee data frame as input and compute some data as mean, 
-            max and min from Outside and Inside measures. It returns a new data frame
-            with these values.
-        Input:
-            An ecobee data frame.
+            It computes mean, standard deviation, max and min values from Outdoor and Indoor measures. 
+            It returns a new dataframe with these values.
+
         Output:
             A simplified data frame containing mean, standard deviation, max, and
-            min values from Inside and Outside Humidity and Temperature.
+            min values from Indoor and Outdoor Humidity and Temperature.
         '''
         import pandas as pd
         import numpy as np
@@ -310,10 +300,10 @@ class ecobeeData:
     def plotTxD(self):
         '''
         Description:
-            It receives a clean dataframe object and plot the relation between the temperature bands
-            and the mean time that the user let the device on. Each band has a width of 5 Celsius degrees.
-        Input:
-            A clean data frame of the same type of the returning data frame of the funtion cleanData().
+            It plot the relation between the temperature bands and the mean time 
+            that the user let the device on mode on. Each band has a width of 5 Celsius degrees.
+            If there is a point for temperature T, it means that the mean time left on mode on 
+            from T-5 to T celsius degrees is represented by this point.
         '''
         import matplotlib.pyplot as plt
         import numpy as np
@@ -357,19 +347,24 @@ class ecobeeData:
         plt.show()
         
     def plotComparison(self, 
-                        summ = False,
-                        tlabel  = 'Day',
-                        ylabel  = 'Temperature (C)',
-                        y1label = 'Outdoor', 
-                        y2label = 'Indoor', 
-                        title   = "Outdoor x Indoor", 
-                        columns = [meanOutTemCol, meanInTemCol, julianDayCol]):
+                    summ = False,
+                    xlabel  = 'Day',
+                    ylabel  = 'Temperature (C)',
+                    y1label = 'Outdoor', 
+                    y2label = 'Indoor', 
+                    title   = "Outdoor x Indoor", 
+                    columns = [meanOutTemCol, meanInTemCol, julianDayCol]):
         '''
         Description:
-            It receives a clean dataframe object and plot Inside temperature 
-            and Outside Temperature for each day of measurement.
+            It plot two different measurements to make a comparison.
         Input:
-            A clean data frame of the same type of the returning data frame of the funtion ecobee.preprocessing.cleanData().
+            columns: A list with the columns to be ploted.
+            summ: If True, It will be used dataframe self.summ. If False, it will be used self.data.
+            xlabel: x-axis label
+            ylabel: y-axis label
+            y1label: legend for the 1st measurement
+            y2label: legend for the 2nd measurement
+            title: title for the plot
         '''
         import matplotlib.pyplot as plt
         import pylab as pl
@@ -392,7 +387,7 @@ class ecobeeData:
         fig = plt.figure(figsize = (16,12))
         ax = fig.add_subplot(1, 1, 1)
         
-        ax.set_xlabel(tlabel)
+        ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         
         min_y = min([y1.min(), y2.min()])
@@ -423,11 +418,29 @@ class ecobeeData:
                     nInterval = 500, 
                     step = 10, 
                     legend = "", 
+                    y2label = "", 
+                    y1label= "", 
+                    xlabel = "", 
                     ylabel = "", 
-                    xlabel= "", 
-                    tlabel = "", 
-                    measlabel = "", 
                     title = ""):
+        '''
+        Description:
+            It plot an animated plot of two different measurements to make a comparison.
+        Input:
+            filename: File name path to be saved on the machine.
+            dataframe: If a dataframe isn't passed, then it will be used self.data or self.summ.
+            nFrame: number of frames to be created.
+            nfps: frames per second to be recorded.
+            nInterval: Delay between frames in milliseconds.
+            step: how much points will be ploted on each frame.
+            columns: A list with the columcolumns=[outTemCol,inTemCol,timeCol]ns to be ploted.
+            summ: If True, It will be used dataframe self.summ. If False, it will be used self.data.
+            xlabel: x-axis label
+            ylabel: y-axis label
+            y1label: legend for the 1st measurement
+            y2label: legend for the 2nd measurement
+            title: title for the plot
+        '''
         
         import matplotlib.pyplot as plt
         import matplotlib.animation as animation
@@ -442,13 +455,13 @@ class ecobeeData:
                 dataframe = self.data
         
         # get values
-        x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
+        y1, y2, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
         
-        # remove nan from x and y
-        fltr = ~np.isnan(x)
-        x, y, t = x[fltr], y[fltr], t[fltr]
-        fltr = ~np.isnan(y)
-        x, y, t = x[fltr], y[fltr], t[fltr]
+        # remove nan from y1 and y2
+        fltr = ~np.isnan(y1)
+        y1, y2, t = y1[fltr], y2[fltr], t[fltr]
+        fltr = ~np.isnan(y2)
+        y1, y2, t = y1[fltr], y2[fltr], t[fltr]
         
         if 'Time' in columns[2]:
             t = t - t.min()
@@ -456,18 +469,18 @@ class ecobeeData:
         fig = plt.figure(figsize = (24,16))
         ax = fig.add_subplot(1, 1, 1)
         
-        ax.set_xlabel(tlabel)
-        ax.set_ylabel(measlabel)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
         
-        k = x[:step]
-        k[0], k[-1] = x.max(), x.min()
+        k = y1[:step]
+        k[0], k[-1] = y1.max(), y1.min()
         
-        l = y[:step]
-        l[0], l[-1] = y.max(), y.min()
+        l = y2[:step]
+        l[0], l[-1] = y2.max(), y2.min()
         
         line = list()
-        ax1, = ax.plot(t[:step], k, 'darkblue', label = xlabel)
-        ax2, = ax.plot(t[:step], l, 'lime', label = ylabel)
+        ax1, = ax.plot(t[:step], k, 'darkblue', label = y1label)
+        ax2, = ax.plot(t[:step], l, 'lime', label = y2label)
         line.append(ax1)
         line.append(ax2)
         pl.legend(loc='lower right')
@@ -479,9 +492,9 @@ class ecobeeData:
             return line
         
         def animate(i):
-            if len(x[i: i+step]) == step:
-                line[0].set_ydata(x[i:i + step])
-                line[1].set_ydata(y[i:i + step])
+            if len(y1[i: i+step]) == step:
+                line[0].set_ydata(y1[i:i + step])
+                line[1].set_ydata(y2[i:i + step])
             return line
             
         ani = animation.FuncAnimation(
@@ -501,11 +514,30 @@ class ecobeeData:
                         nInterval = 500, 
                         step = 10, 
                         legend = "", 
+                        y2label = "", 
+                        y1label= "", 
+                        xlabel = "", 
                         ylabel = "", 
-                        xlabel= "", 
-                        tlabel = "", 
-                        measlabel = "", 
                         title = ""):
+        '''
+        Description:
+            It plot an animated plot of two different measurements to make a comparison.
+        Input:
+            filename: File name path to be saved on the machine.
+            dataframe: If a dataframe isn't passed, then it will be used self.data or self.summ.
+            nFrame: number of frames to be created.
+            nfps: frames per second to be recorded.
+            nInterval: Delay between frames in milliseconds.
+            step: how much points will be ploted on each frame.
+            columns: A list with the columcolumns=[outTemCol,inTemCol,timeCol]ns to be ploted.
+            summ: If True, It will be used dataframe self.summ. If False, it will be used self.data.
+            xlabel: x-axis label
+            ylabel: y-axis label
+            y1label: legend for the 1st measurement
+            y2label: legend for the 2nd measurement
+            title: title for the plot
+        '''
+        
         import matplotlib.pyplot as plt
         import matplotlib.animation as animation
         import pylab as pl
@@ -519,13 +551,13 @@ class ecobeeData:
                 dataframe = self.data
         
         # get values
-        x, y, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
+        y1, y2, t = dataframe[columns[0]].values, dataframe[columns[1]].values, dataframe[columns[2]].values
     
-        # remove nan from x and y
-        fltr = ~np.isnan(x)
-        x, y, t = x[fltr], y[fltr], t[fltr]
-        fltr = ~np.isnan(y)
-        x, y, t = x[fltr], y[fltr], t[fltr]
+        # remove nan from y1 and y2
+        fltr = ~np.isnan(y1)
+        y1, y2, t = y1[fltr], y2[fltr], t[fltr]
+        fltr = ~np.isnan(y2)
+        y1, y2, t = y1[fltr], y2[fltr], t[fltr]
         
         if 'Time' in columns[2]:
             t = t - t.min()
@@ -533,12 +565,12 @@ class ecobeeData:
         fig = plt.figure(figsize = (24,16))
         ax = fig.add_subplot(1, 1, 1)
     
-        ax.set_xlabel(tlabel)
-        ax.set_ylabel(measlabel)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
     
         line = list()
-        ax1, = ax.plot(t, x, 'darkblue', label = xlabel)
-        ax2, = ax.plot(t, y, 'lime', label = ylabel)
+        ax1, = ax.plot(t, y1, 'darkblue', label = y1label)
+        ax2, = ax.plot(t, y2, 'lime', label = y2label)
         line.append(ax1)
         line.append(ax2)
         pl.legend(loc='lower right')
@@ -550,8 +582,8 @@ class ecobeeData:
             return line
     
         def animate(i):
-            line[0].set_data(t[:i*step], x[:i*step])
-            line[1].set_data(t[:i*step], y[:i*step])
+            line[0].set_data(t[:i*step], y1[:i*step])
+            line[1].set_data(t[:i*step], y2[:i*step])
             return line
     
         ani = animation.FuncAnimation(
