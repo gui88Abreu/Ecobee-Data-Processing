@@ -320,8 +320,8 @@ class ecobeeData:
         # get mean time on and the respectives standard deviations
         for t in temp:
             f = data.loc[(data[meanOutTemCol] < t) & (data[meanOutTemCol] > t - 5), timeDeviceOnCol]
-            mean.append(f.sum()/f.size)
-            std.append(np.std(f))
+            mean.append(f.sum()/(f.size*60.0))
+            std.append(np.std(np.asarray(f)/60.0))
                 
         x = temp
         y = mean
@@ -331,7 +331,7 @@ class ecobeeData:
         ax = fig.add_subplot(1, 1, 1)
         
         ax.set_xlabel('Mean Temperature Band (C)')
-        ax.set_ylabel('Device On Mean Time (min/day)')
+        ax.set_ylabel('Device On Mean Time (hours/day)')
         
         # Major ticks every 20, minor ticks every 1
         major_ticks = np.arange(0, int(np.max(y))+int(np.max(e) + 50 ), 20)
