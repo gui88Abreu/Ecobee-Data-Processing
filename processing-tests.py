@@ -7,8 +7,7 @@ Created on Thu Sep 26 18:45:31 2019
 """
 
 datasetPath = '../data_set/ecobee/'
-account     = 'g173691@dac.unicamp.br'
-
+accountFile = 'account'
 #importing libraries
 import ecobee.preprocessing as pp
 import ecobee.metadata as md
@@ -25,7 +24,7 @@ file =  device + '.csv'
 del x
 
 #download data from google cloud
-os.system('gcloud auth login '+ account)
+os.system('gcloud auth login '+ ((os.popen("cat "+ accountFile)).read()).replace('\n',''))
 for year in np.arange(2015,2020,1).astype('str'):
     os.system('gsutil cp gs://donate_your_data_2019/files/'+year+'/'+file+'.zip '+year)
     os.system('unzip '+year+'/'+file+'.zip -d ' + year)
@@ -45,23 +44,23 @@ print('Done')
 
 ecobee.plotTxD()
 ecobee.plotComparison(summ = True, 
-                       ylabel = "Air Mean Relative Humidity [%]", 
-                       columns = [pp.meanOutHumCol, pp.meanInHumCol, pp.julianDayCol])
+                    ylabel = "Air Mean Relative Humidity [%]", 
+                    columns = [pp.meanOutHumCol, pp.meanInHumCol, pp.julianDayCol])
 
 new_df = ecobee.data.copy()
 new_df[pp.timeCol] = np.arange(5,new_df.shape[0]*5 + 1, 5)
 ecobee.animatedPlotStatic(dataframe = new_df[(new_df[pp.julianDayCol] >= 4) & (new_df[pp.julianDayCol] <= 8)],
-                fileName   = 'tmp_animation.mp4',
-                 columns   = [pp.outHumCol,pp.inHumCol, pp.timeCol], 
-                 nFrames   = 1000,
-                 nfps      = 60,
-                 step      = 2,
-                 nInterval = 500,
-                 measlabel = "Humidity (%)",
-                 tlabel    = "Time Diference (min)",
-                 xlabel    = "Outdoor Humidity",
-                 ylabel    = "Indoor Humidity",
-                 title     = "Comparison Between Outdoor and Indoor Humidity")
+                        fileName   = 'tmp_animation.mp4',
+                         columns   = [pp.outHumCol,pp.inHumCol, pp.timeCol], 
+                         nFrames   = 1000,
+                         nfps      = 60,
+                         step      = 2,
+                         nInterval = 500,
+                         ylabel = "Humidity (%)",
+                         xlabel    = "Time Diference (min)",
+                         y1label    = "Outdoor Humidity",
+                         y2label    = "Indoor Humidity",
+                         title     = "Comparison Between Outdoor and Indoor Humidity")
 
 deviceInfo = metadata.data.loc[metadata.data[md.dataIdCol] == device]
 print(deviceInfo.iloc[0])
