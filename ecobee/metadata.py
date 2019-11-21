@@ -35,3 +35,7 @@ class metaData:
   
     def __init__(self, path):
         self.data = pd.read_csv(path)
+        
+    def select(self, column, target):
+        if column in self.data.columns:
+            return self.data[self.data[column] == target]

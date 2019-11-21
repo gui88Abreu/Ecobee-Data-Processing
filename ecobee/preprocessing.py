@@ -126,8 +126,7 @@ class ecobeeData:
                     data.pop(i)
                 else:
                     i+=1
-          
-            # find the date of each row
+
             columns = rawData[0].split(',')
             try:
                 data = pd.DataFrame([line.split(',') for line in rawData[1:]], columns=columns)
